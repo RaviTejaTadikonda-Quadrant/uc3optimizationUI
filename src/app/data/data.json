@@ -1,0 +1,1610 @@
+{
+    "investigation_id": "inv_20260708T120346Z_7364389b",
+    "status": "completed",
+    "analysis": {
+        "header": {
+            "investigation_id": "inv_20260708T120346Z_7364389b",
+            "status": "completed",
+            "error": null,
+            "skipped_reason": null,
+            "message": null,
+            "item": {
+                "subscription_id": "2cc4fb79-4f6a-4eeb-9fe2-c51dc1165e0e",
+                "service": "synapse",
+                "resource_group": "Synapsetofabric",
+                "workspace_name": "synapsetofabricws1",
+                "item_type": "pipelines",
+                "item_name": "Data_Pipeline_-_Engineering"
+            },
+            "pipeline_health": "Severe",
+            "pipeline_deviation_pct": -91.86,
+            "pipeline_deviation_seconds": -1000.28,
+            "target_code_segments": [
+                {
+                    "activity_name": "Bronze",
+                    "notebook_item_name": "bronze_nb_demo",
+                    "language": "python",
+                    "source_chars": 665
+                },
+                {
+                    "activity_name": "Data Cleaning",
+                    "notebook_item_name": "NB02_Data_Cleansing",
+                    "language": "python",
+                    "source_chars": 1325
+                },
+                {
+                    "activity_name": "Gold",
+                    "notebook_item_name": "Gold_nb_demo",
+                    "language": "python",
+                    "source_chars": 1165
+                }
+            ],
+            "started_at": "2026-07-08T12:03:46.942046+00:00",
+            "ended_at": "2026-07-08T12:06:32.220235+00:00",
+            "stage_timings": {
+                "enrichment_seconds": 0.682,
+                "intelligence_agents_seconds": 56.614,
+                "evidence_validation_seconds": 0.001,
+                "root_cause_seconds": 24.594,
+                "recommendation_seconds": 26.614,
+                "impact_seconds": 0.0,
+                "report_seconds": 55.716
+            },
+            "total_input_tokens": 49330,
+            "total_output_tokens": 11911,
+            "estimated_monthly_cost": null
+        },
+        "pipeline_telemetry": [
+            {
+                "step": "context_loaded",
+                "at": "2026-07-08T12:03:47.063766+00:00",
+                "sequence": 1
+            },
+            {
+                "step": "context_enriched",
+                "at": "2026-07-08T12:03:47.872504+00:00",
+                "sequence": 2
+            },
+            {
+                "step": "round_1_complete",
+                "at": "2026-07-08T12:04:44.463958+00:00",
+                "sequence": 3
+            },
+            {
+                "step": "evidence_validated",
+                "at": "2026-07-08T12:04:44.623183+00:00",
+                "sequence": 4
+            },
+            {
+                "step": "root_cause_complete",
+                "at": "2026-07-08T12:05:09.392907+00:00",
+                "sequence": 5
+            },
+            {
+                "step": "recommendations_generated",
+                "at": "2026-07-08T12:05:36.144286+00:00",
+                "sequence": 6
+            },
+            {
+                "step": "impact_assessed",
+                "at": "2026-07-08T12:05:36.285975+00:00",
+                "sequence": 7
+            },
+            {
+                "step": "report_complete",
+                "at": "2026-07-08T12:06:32.220272+00:00",
+                "sequence": 8
+            }
+        ],
+        "agents": [
+            {
+                "agent": "python_intelligence_agent",
+                "stage": "intelligence",
+                "model": "claude-sonnet-4-6",
+                "provider": "anthropic",
+                "latency_seconds": 6.441,
+                "input_tokens": 2238,
+                "output_tokens": 220,
+                "findings_count": 1,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "sql_intelligence_agent",
+                "stage": "intelligence",
+                "model": "claude-sonnet-4-6",
+                "provider": "anthropic",
+                "latency_seconds": 8.167,
+                "input_tokens": 2234,
+                "output_tokens": 378,
+                "findings_count": 2,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "spark_intelligence_agent",
+                "stage": "intelligence",
+                "model": "claude-sonnet-4-6",
+                "provider": "anthropic",
+                "latency_seconds": 8.763,
+                "input_tokens": 2708,
+                "output_tokens": 387,
+                "findings_count": 2,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "configuration_agent",
+                "stage": "intelligence",
+                "model": "claude-sonnet-4-6",
+                "provider": "anthropic",
+                "latency_seconds": 36.227,
+                "input_tokens": 9007,
+                "output_tokens": 1950,
+                "findings_count": 6,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "runtime_intelligence_agent",
+                "stage": "intelligence",
+                "model": "claude-sonnet-4-6",
+                "provider": "anthropic",
+                "latency_seconds": 40.703,
+                "input_tokens": 5931,
+                "output_tokens": 2097,
+                "findings_count": 6,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "dependency_lineage_agent",
+                "stage": "intelligence",
+                "model": "claude-sonnet-4-6",
+                "provider": "anthropic",
+                "latency_seconds": 56.329,
+                "input_tokens": 13879,
+                "output_tokens": 3446,
+                "findings_count": 7,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "evidence_validation_agent",
+                "stage": "evidence_validation",
+                "model": "claude-sonnet-4-6",
+                "provider": "deterministic",
+                "latency_seconds": 0.001,
+                "input_tokens": null,
+                "output_tokens": null,
+                "findings_count": null,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "root_cause_agent",
+                "stage": "root_cause",
+                "model": "claude-opus-4-8",
+                "provider": "anthropic",
+                "latency_seconds": 24.594,
+                "input_tokens": 12643,
+                "output_tokens": 2000,
+                "findings_count": null,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "recommendation_validation_agent",
+                "stage": "recommendation",
+                "model": "claude-sonnet-4-6",
+                "provider": "anthropic",
+                "latency_seconds": 26.614,
+                "input_tokens": 690,
+                "output_tokens": 1433,
+                "findings_count": null,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "impact_agent",
+                "stage": "impact",
+                "model": "deterministic",
+                "provider": "deterministic",
+                "latency_seconds": 0.0,
+                "input_tokens": null,
+                "output_tokens": null,
+                "findings_count": null,
+                "status": "success",
+                "error": null
+            },
+            {
+                "agent": "action_plan_report_agent",
+                "stage": "action_plan_report",
+                "model": "deterministic",
+                "provider": "deterministic",
+                "latency_seconds": 55.716,
+                "input_tokens": null,
+                "output_tokens": null,
+                "findings_count": null,
+                "status": "success",
+                "error": null
+            }
+        ],
+        "agent_recommendation_analysis": {
+            "core_bottleneck": {
+                "category": "orchestration",
+                "headline": "Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs.",
+                "description": "Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs. Its duration swings from ~16s (cancelled) to 111s, 126s, 293s, and 341s across observed runs, representing a ~3x spread on successful executions alone. With a -90.99% deviation and 50.7% contribution to total pipeline deviation, this activity is the primary driver of 'Severe' pipeline health.",
+                "causal_chain": [
+                    "runtime_intelligence_agent: Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs. Its duration swings from ~16s (cancelled) to 111s, 126s, 293s, and 341s across observed runs, representing a ~3x spread on successful executions alone. With a -90.99% deviation and 50.7% contribution to total pipeline deviation, this activity is the primary driver of 'Severe' pipeline health.",
+                    "runtime_intelligence_agent: GM_Check_File (GetMetadata) exhibits extreme and erratic runtime variance, fluctuating between ~7s and ~94s across runs with a -85.95% deviation and 13.2% contribution to pipeline deviation. Two runs recorded durations of 85-94 seconds for a metadata check that completed in under 9 seconds in other runs. This points to intermittent storage latency or ADLS throttling during file existence checks.",
+                    "runtime_intelligence_agent: If Condition1 acts as a sequencing bottleneck by wrapping a large downstream execution branch. Its observed durations range from 700s to 769s, accounting for the majority of total pipeline runtime in every successful run. Given that it encapsulates downstream notebook activities (Gold, Generate_Derived_Metrics, Apply_Data_Quality_Rules, Load_Curated_Layer, Post_Load_Validation_Report), its long runtime is primarily inherited from sequential child execution rather than being an independent bottleneck itself. The 6.7% deviation contribution reflects amplification of child activity delays.",
+                    "runtime_intelligence_agent: The most recent pipeline run (a9c0c8ee) was cancelled after 88.6 seconds, with Bronze cancelled mid-execution. This cancellation is a direct contributor to the pipeline health rating of 'Severe' and the -91.86% pipeline deviation, as the run completed less than 8% of its normal runtime. The cancellation cause is not captured in available telemetry (no error_message), and whether this was user-initiated or system-triggered cannot be determined from the data.",
+                    "runtime_intelligence_agent: Copy Raw to Bronze exhibits moderate copy throughput deviation (-21.62%, -17.42s) with runtime varying from 60s to 102s across runs. While not a dominant contributor (5.5% of pipeline deviation), the variance is consistent with variable source data volume or network throughput fluctuations rather than a structural pipeline problem. All runs succeeded.",
+                    "runtime_intelligence_agent: Switch1 and Data Cleaning show positive deviation (running slower than baseline by +11.25% and +11.66% respectively), each contributing 4.1% to total pipeline deviation. Their durations are relatively stable across runs (96-129s for Data Cleaning, 99-129s for Switch1), suggesting a modest but consistent increase in processing time versus historical baseline rather than sporadic spikes. These are secondary contributors."
+                ],
+                "supporting_findings": [
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent"
+                ],
+                "confidence": 1.0
+            },
+            "compilation_adjustment": "Enforced explicit schema-on-read, introduced dataframe caching, released cached memory after use, and removed redundant count() scans across 3 activities.",
+            "recommendations": [
+                {
+                    "title": "Align Pipeline Activity Node Size to Notebook Session Configuration",
+                    "description": "The pipeline activity definition hard-codes executor_size='Small' and driver_size='Small' (4g memory, 2 vCores), while the Bronze SynapseNotebook session config requests Medium-tier resources (28g driver/executor memory, 4 cores, 2 executors). Update the pipeline JSON activity definition to set executor_size='Medium' and driver_size='Medium' to match the notebook's session configuration. This eliminates the resource mismatch that is forcing fallback behaviour or severe resource contention, which is the most likely root cause of the -90.99% runtime deviation. Validate by comparing Spark UI executor memory allocation before and after the change across at least 5 runs.",
+                    "target_activity": "Bronze SynapseNotebook",
+                    "impact_score": 0.97,
+                    "effort_score": 0.1,
+                    "risk_score": 0.1,
+                    "confidence": 1.0
+                },
+                {
+                    "title": "Remove Redundant df.count() Action Following display(df.limit(10))",
+                    "description": "The Bronze notebook calls df.count() after display(df.limit(10)), triggering a full CSV scan as an eager Spark action. This is redundant in a production pipeline context and, combined with inferSchema, causes three full passes over the source CSV data. Remove the df.count() call entirely from the production notebook path. If row-count validation is a business requirement, cache the DataFrame before the display call (df.cache()) and then call df.count(), ensuring the data is read only once. Alternatively, defer the count to a post-write validation step using the written output rather than the raw read DataFrame.",
+                    "target_activity": "Bronze SynapseNotebook",
+                    "impact_score": 0.78,
+                    "effort_score": 0.1,
+                    "risk_score": 0.05,
+                    "confidence": 1.0
+                },
+                {
+                    "title": "Replace inferSchema with Explicit Schema Definition on CSV Ingestion",
+                    "description": "Remove inferSchema=True from the CSV read operation in the Bronze notebook and replace it with an explicitly defined StructType schema. inferSchema requires a full dataset scan before data is processed, effectively doubling I/O cost. Combined with the df.count() call (see separate recommendation), this results in three full passes over the CSV. Define the schema statically based on the known source structure and pass it via the schema= parameter in spark.read.csv(). This eliminates one full dataset scan and reduces job stages. Expected outcome: reduction of at least one Spark job stage and proportional reduction in Bronze notebook runtime.",
+                    "target_activity": "Bronze SynapseNotebook",
+                    "impact_score": 0.82,
+                    "effort_score": 0.2,
+                    "risk_score": 0.1,
+                    "confidence": 1.0
+                },
+                {
+                    "title": "Cache DataFrame After Single Read to Eliminate Repeated Full Scans",
+                    "description": "After fixing inferSchema and removing df.count(), consolidate all remaining DataFrame actions by calling df.cache() (or df.persist(StorageLevel.MEMORY_AND_DISK)) immediately after the single authoritative spark.read.csv() call with the explicit schema. This ensures that any subsequent actions (transformations, display calls, write operations) reuse the in-memory cached partition rather than re-reading from the CSV source. Pair this with an explicit df.unpersist() at the end of the notebook to release executor memory cleanly. This is particularly important given the Medium node memory allocation (28g) which, once correctly provisioned, provides sufficient headroom for caching the Bronze dataset.",
+                    "target_activity": "Bronze SynapseNotebook",
+                    "impact_score": 0.72,
+                    "effort_score": 0.15,
+                    "risk_score": 0.1,
+                    "confidence": 1.0
+                },
+                {
+                    "title": "Implement Notebook-Level Retry Logic with Exponential Backoff and Alerting",
+                    "description": "The Bronze SynapseNotebook has an 80% success rate with cancellations observed (16s cancelled run). Add a retry policy at the pipeline activity level: set retryCount=2 and retryIntervalInSeconds=30 on the Bronze notebook activity in the pipeline definition. Additionally, instrument the notebook with structured logging at key checkpoints (session init, schema read, transform, write) and configure a pipeline failure alert via Azure Monitor or Synapse alerts to notify on-call engineers when the Bronze activity exceeds a runtime threshold (e.g., 200s) or fails. This reduces undetected failures and limits the blast radius of cancellations on downstream critical path activities.",
+                    "target_activity": "Bronze SynapseNotebook",
+                    "impact_score": 0.65,
+                    "effort_score": 0.25,
+                    "risk_score": 0.15,
+                    "confidence": 0.9
+                },
+                {
+                    "title": "Establish Bronze Notebook SLA Gate to Protect Downstream Critical Path",
+                    "description": "Add a pipeline-level timeout on the Bronze SynapseNotebook activity set to 150% of the target healthy duration (e.g., if healthy p50 is ~120s, set timeout to 180s). Combine this with a conditional check activity (If Condition) after Bronze that evaluates activity output status and duration metadata before proceeding to If Condition1, ForEach1, and Switch1. If Bronze exceeds the SLA threshold, route to a failure notification branch rather than propagating delay to all downstream activities. This decouples Bronze instability from downstream orchestration and provides early circuit-breaking behaviour on degraded runs.",
+                    "target_activity": "Bronze SynapseNotebook",
+                    "impact_score": 0.6,
+                    "effort_score": 0.35,
+                    "risk_score": 0.2,
+                    "confidence": 0.88
+                }
+            ],
+            "target_optimization_forecast": {
+                "summary": "6 recommendation(s) identified for Data_Pipeline_-_Engineering (synapse). Highest-impact item: 'Align Pipeline Activity Node Size to Notebook Session Configuration' (~97.0% estimated gain, low effort, low risk).",
+                "detailed_summary": null,
+                "items": [
+                    {
+                        "title": "Align Pipeline Activity Node Size to Notebook Session Configuration",
+                        "target_activity": "Bronze SynapseNotebook",
+                        "estimated_performance_gain_pct": 97.0,
+                        "implementation_effort": "low",
+                        "risk_level": "low"
+                    },
+                    {
+                        "title": "Remove Redundant df.count() Action Following display(df.limit(10))",
+                        "target_activity": "Bronze SynapseNotebook",
+                        "estimated_performance_gain_pct": 78.0,
+                        "implementation_effort": "low",
+                        "risk_level": "low"
+                    },
+                    {
+                        "title": "Replace inferSchema with Explicit Schema Definition on CSV Ingestion",
+                        "target_activity": "Bronze SynapseNotebook",
+                        "estimated_performance_gain_pct": 82.0,
+                        "implementation_effort": "low",
+                        "risk_level": "low"
+                    },
+                    {
+                        "title": "Cache DataFrame After Single Read to Eliminate Repeated Full Scans",
+                        "target_activity": "Bronze SynapseNotebook",
+                        "estimated_performance_gain_pct": 72.0,
+                        "implementation_effort": "low",
+                        "risk_level": "low"
+                    },
+                    {
+                        "title": "Implement Notebook-Level Retry Logic with Exponential Backoff and Alerting",
+                        "target_activity": "Bronze SynapseNotebook",
+                        "estimated_performance_gain_pct": 65.0,
+                        "implementation_effort": "low",
+                        "risk_level": "low"
+                    },
+                    {
+                        "title": "Establish Bronze Notebook SLA Gate to Protect Downstream Critical Path",
+                        "target_activity": "Bronze SynapseNotebook",
+                        "estimated_performance_gain_pct": 60.0,
+                        "implementation_effort": "medium",
+                        "risk_level": "low"
+                    }
+                ]
+            }
+        },
+        "structural_faults": [
+            {
+                "title": "Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an…",
+                "description": "Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs.",
+                "full_description": "Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs. Its duration swings from ~16s (cancelled) to 111s, 126s, 293s, and 341s across observed runs, representing a ~3x spread on successful executions alone. With a -90.99% deviation and 50.7% contribution to total pipeline deviation, this activity is the primary driver of 'Severe' pipeline health.",
+                "category": "orchestration",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "supporting_findings": [
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent"
+                ],
+                "causal_chain": [
+                    "runtime_intelligence_agent: Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs. Its duration swings from ~16s (cancelled) to 111s, 126s, 293s, and 341s across observed runs, representing a ~3x spread on successful executions alone. With a -90.99% deviation and 50.7% contribution to total pipeline deviation, this activity is the primary driver of 'Severe' pipeline health.",
+                    "runtime_intelligence_agent: GM_Check_File (GetMetadata) exhibits extreme and erratic runtime variance, fluctuating between ~7s and ~94s across runs with a -85.95% deviation and 13.2% contribution to pipeline deviation. Two runs recorded durations of 85-94 seconds for a metadata check that completed in under 9 seconds in other runs. This points to intermittent storage latency or ADLS throttling during file existence checks.",
+                    "runtime_intelligence_agent: If Condition1 acts as a sequencing bottleneck by wrapping a large downstream execution branch. Its observed durations range from 700s to 769s, accounting for the majority of total pipeline runtime in every successful run. Given that it encapsulates downstream notebook activities (Gold, Generate_Derived_Metrics, Apply_Data_Quality_Rules, Load_Curated_Layer, Post_Load_Validation_Report), its long runtime is primarily inherited from sequential child execution rather than being an independent bottleneck itself. The 6.7% deviation contribution reflects amplification of child activity delays.",
+                    "runtime_intelligence_agent: The most recent pipeline run (a9c0c8ee) was cancelled after 88.6 seconds, with Bronze cancelled mid-execution. This cancellation is a direct contributor to the pipeline health rating of 'Severe' and the -91.86% pipeline deviation, as the run completed less than 8% of its normal runtime. The cancellation cause is not captured in available telemetry (no error_message), and whether this was user-initiated or system-triggered cannot be determined from the data.",
+                    "runtime_intelligence_agent: Copy Raw to Bronze exhibits moderate copy throughput deviation (-21.62%, -17.42s) with runtime varying from 60s to 102s across runs. While not a dominant contributor (5.5% of pipeline deviation), the variance is consistent with variable source data volume or network throughput fluctuations rather than a structural pipeline problem. All runs succeeded.",
+                    "runtime_intelligence_agent: Switch1 and Data Cleaning show positive deviation (running slower than baseline by +11.25% and +11.66% respectively), each contributing 4.1% to total pipeline deviation. Their durations are relatively stable across runs (96-129s for Data Cleaning, 99-129s for Switch1), suggesting a modest but consistent increase in processing time versus historical baseline rather than sporadic spikes. These are secondary contributors."
+                ]
+            },
+            {
+                "title": "Bronze notebook session config requests Medium-tier resources (28g driver/executor…",
+                "description": "Bronze notebook session config requests Medium-tier resources (28g driver/executor memory, 4 cores each, 2 executors) but the pipeline activity definition hard-codes executor_size='Small' and driver_size='Small'…",
+                "full_description": "Bronze notebook session config requests Medium-tier resources (28g driver/executor memory, 4 cores each, 2 executors) but the pipeline activity definition hard-codes executor_size='Small' and driver_size='Small', creating a mismatch. The Small node size in Synapse provides only 4g memory and 2 vCores per node, meaning the session config's memory/core requests cannot be honoured, likely forcing a fallback or causing severe resource contention/queuing that explains the -90.99% deviation.",
+                "category": "configuration",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "supporting_findings": [
+                    "configuration_agent",
+                    "configuration_agent",
+                    "configuration_agent",
+                    "configuration_agent",
+                    "configuration_agent",
+                    "configuration_agent"
+                ],
+                "causal_chain": [
+                    "configuration_agent: Bronze notebook session config requests Medium-tier resources (28g driver/executor memory, 4 cores each, 2 executors) but the pipeline activity definition hard-codes executor_size='Small' and driver_size='Small', creating a mismatch. The Small node size in Synapse provides only 4g memory and 2 vCores per node, meaning the session config's memory/core requests cannot be honoured, likely forcing a fallback or causing severe resource contention/queuing that explains the -90.99% deviation.",
+                    "configuration_agent: Gold and Data Cleaning notebook activities share the same executor_size='Small' / driver_size='Small' activity-level setting vs. their session configs requesting 28g memory and 4 cores per node (2 executors). The same size-vs-session-config mismatch present on Bronze also affects these notebooks, likely contributing to resource pressure on 'synsparkpool' and slower-than-baseline execution.",
+                    "configuration_agent: All SynapseNotebook activities in the pipeline (Bronze, ForEach Notebook, Data Cleaning, Switch1 Default) share the single pool 'synsparkpool' with no autoscale or num_executors configuration specified at the activity level (num_executors=null, configuration_type=null). Simultaneous or back-to-back Spark sessions from the ForEach (sequential=true) and Switch on the same pool can exhaust pool capacity, causing queuing that cascades into the large negative deviations seen on Bronze (-90.99%) and GM_Check_File (-85.95%), the latter being downstream of a saturated pipeline.",
+                    "configuration_agent: GM_Check_File (GetMetadata) uses AzureBlobStorageReadSettings (Blob storage) while 'Copy Raw to Bronze' reads from and writes to AzureBlobFSReadSettings/AzureBlobFSWriteSettings (ADLS Gen2). If the file written by the Copy activity lands in ADLS Gen2 but GM_Check_File checks a different Blob Storage endpoint (different dataset 'Dataset' vs. 'adls_source'/'copy_sink'), the check may consistently point at a wrong location, causing retries/waits or unexpected path resolution delay contributing to the -85.95% deviation.",
+                    "configuration_agent: All activities pipeline-wide have retry=0 with no fallback. For SynapseNotebook activities running on a shared, potentially saturated Spark pool, a single transient cluster startup failure (cold pool) causes immediate activity failure with no retry, which can manifest as anomalously short (failed-fast) durations explaining some of the large negative percentage deviations rather than slow runs.",
+                    "configuration_agent: Copy Raw to Bronze has no explicit parallelism settings: parallel_copies=null and data_integration_units=null. Without explicit DIU or parallel copy configuration, ADF/Synapse auto-selects conservative defaults. This, combined with the sink writing text with quote_all_text=true and a .txt extension (potentially larger output), may contribute to the -21.62% deviation. Evidence is partial as linked service throughput settings and actual data volumes are absent."
+                ]
+            },
+            {
+                "title": "inferSchema on CSV triggers full dataset scan twice, causing severe Bronze slowdown and…",
+                "description": "inferSchema on CSV triggers full dataset scan twice, causing severe Bronze slowdown and extra job stage.",
+                "full_description": "inferSchema on CSV triggers full dataset scan twice, causing severe Bronze slowdown and extra job stage.",
+                "category": "sql",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "supporting_findings": [
+                    "sql_intelligence_agent",
+                    "sql_intelligence_agent"
+                ],
+                "causal_chain": [
+                    "sql_intelligence_agent: inferSchema on CSV triggers full dataset scan twice, causing severe Bronze slowdown and extra job stage.",
+                    "sql_intelligence_agent: Gold reads entire parquet directory with no partition filter, causing full column scan on unbounded dataset."
+                ]
+            },
+            {
+                "title": "Bronze notebook triggers df.count() after display(df.limit(10)), causing full CSV scan…",
+                "description": "Bronze notebook triggers df.count() after display(df.limit(10)), causing full CSV scan twice with inferSchema adding a third pass.",
+                "full_description": "Bronze notebook triggers df.count() after display(df.limit(10)), causing full CSV scan twice with inferSchema adding a third pass.",
+                "category": "unknown",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "supporting_findings": [
+                    "spark_intelligence_agent",
+                    "spark_intelligence_agent",
+                    "python_intelligence_agent"
+                ],
+                "causal_chain": [
+                    "spark_intelligence_agent: Bronze notebook triggers df.count() after display(df.limit(10)), causing full CSV scan twice with inferSchema adding a third pass.",
+                    "spark_intelligence_agent: Data Cleaning dropDuplicates() triggers shuffle with default 200 shuffle partitions on only 2 executors (8 cores total), wasting partition slots.",
+                    "python_intelligence_agent: No severe Python anti-patterns detected in any notebook; code uses native Spark functions throughout with no collect(), toPandas(), or Python UDFs."
+                ]
+            },
+            {
+                "title": "Bronze notebook is the dominant upstream bottleneck on the main critical path, showing…",
+                "description": "Bronze notebook is the dominant upstream bottleneck on the main critical path, showing severe performance degradation (-90.99% deviation).",
+                "full_description": "Bronze notebook is the dominant upstream bottleneck on the main critical path, showing severe performance degradation (-90.99% deviation). Its duration swings wildly across runs (16s cancelled, 111s, 126s, 340s, 293s), directly delaying If Condition1, ForEach1, Switch1, and all downstream activities. In the two slowest runs (bc686a21: 1556s, 73624619: 1442s), Bronze alone consumed 340s and 293s respectively—2-3x its best healthy duration—accounting for a large fraction of total run-time variance.",
+                "category": "dependency",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "supporting_findings": [
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent"
+                ],
+                "causal_chain": [
+                    "dependency_lineage_agent: Bronze notebook is the dominant upstream bottleneck on the main critical path, showing severe performance degradation (-90.99% deviation). Its duration swings wildly across runs (16s cancelled, 111s, 126s, 340s, 293s), directly delaying If Condition1, ForEach1, Switch1, and all downstream activities. In the two slowest runs (bc686a21: 1556s, 73624619: 1442s), Bronze alone consumed 340s and 293s respectively—2-3x its best healthy duration—accounting for a large fraction of total run-time variance.",
+                    "dependency_lineage_agent: If Condition1 consistently accounts for 700-769 seconds across all successful runs, making it the single largest time consumer in the pipeline. This is because it executes a sequential chain of up to 6 nested notebooks (Gold → Generate_Derived_Metrics → Apply_Data_Quality_Rules → Load_Curated_Layer → Post_Load_Validation_Report in the false branch, or Silver → Validate → Cleanse → Transform → Enrich → Aggregate in the true branch). The false branch is consistently taken (Amount default=4500 < 5000 threshold) and its chain totals ~545-750s. If Condition1's duration is the primary driver of overall pipeline runtime.",
+                    "dependency_lineage_agent: GM_Check_File (GetMetadata) exhibits severe and highly variable latency (-85.95% deviation). In two runs it took 85-94 seconds instead of the ~7-8 second baseline seen in healthier runs. This points to intermittent Azure Blob Storage metadata lookup delays or throttling. Although GM_Check_File sits near the tail of the pipeline (after Switch1 and Wait for 10 sec), its spikes directly added 75-85 seconds to overall pipeline duration in runs 73624619 and bc686a21.",
+                    "dependency_lineage_agent: Copy Raw to Bronze shows a Warning-level deviation (-21.62%) with moderate duration variability across runs (60-102 seconds). As the root node of the entire pipeline critical path, any increase in its duration propagates to every downstream activity including Bronze, If Condition1, ForEach1, and Switch1. Run 73624619 had Copy=102s (highest) and also had Bronze=293s, compounding the upstream delay accumulation.",
+                    "dependency_lineage_agent: The primary critical path for this pipeline is fully sequential with no parallelism: Copy Raw to Bronze → Bronze → If Condition1 (false branch: Gold → Generate_Derived_Metrics → Apply_Data_Quality_Rules → Load_Curated_Layer → Post_Load_Validation_Report) → ForEach1 (sequential, ForEach Notebook) → Switch1 (Data Cleaning) → Wait for 10 sec → GM_Check_File → IF_File_Exists → Set_File_Found. The total critical path in healthy runs is ~1174-1183s. ForEach1 is configured as sequential (is_sequential=true) with no batch concurrency, meaning notebook iterations cannot parallelize — even though only one notebook is in the default parameter array.",
+                    "dependency_lineage_agent: Gold notebook and Switch1 (containing Data Cleaning) both show Warning-level deviations (-17.1% and +11.25% respectively). Gold's variability (112-182s across runs) propagates into the If Condition1 total duration since it sits at the head of the false-branch sequential chain. Switch1's +11.25% positive deviation (running longer than baseline) in Data Cleaning (NB02_Data_Cleansing on synsparkpool Small executor) suggests the Spark pool may experience cold-start or resource contention when Switch1 executes after ForEach1 also used synsparkpool.",
+                    "dependency_lineage_agent: Set_File_Found and IF_File_Exists show Warning-level deviations (-23.91% and -14.21% respectively) despite individually tiny absolute durations (sub-2s). The deviation signal for Set_File_Found is driven by the anomalous run bc686a21 where GM_Check_File took 94s, as IF_File_Exists and Set_File_Found cannot start until GM_Check_File completes. The deviations in these tail activities are therefore inherited symptoms of GM_Check_File's latency spikes rather than independent issues."
+                ]
+            }
+        ],
+        "structural_faults_count": 5,
+        "all_findings": [
+            {
+                "title": "Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs. Its duration swings from ~16s (cancelled) to 111s, 126s, 293s, and 341s across observed runs, representing a ~3x spread on successful executions alone. With a -90.99% deviation and 50.7% contribution to total pipeline deviation, this activity is the primary driver of 'Severe' pipeline health.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "runtime_intelligence_agent",
+                "affected_activities": [
+                    "Bronze"
+                ],
+                "evidence": {
+                    "deviation_pct": -90.99,
+                    "deviation_seconds": -161.58,
+                    "contribution_to_pipeline_deviation": 0.507,
+                    "success_rate_pct": 80.0,
+                    "observed_durations_seconds": [
+                        16.005,
+                        111.931,
+                        126.16,
+                        340.533,
+                        293.266
+                    ],
+                    "cancelled_run": "a9c0c8ee-44fe-4eb8-8a9d-c06a5b13c802",
+                    "cause": "unexplained_drift_plus_reliability_failure",
+                    "note": "The 80% success rate corresponds to the cancelled run where Bronze was cancelled mid-execution. Runtime variance across successful runs (112s to 341s) suggests cluster cold-start, Spark pool contention, or variable data volume, but no explicit error messages are present to confirm root cause."
+                },
+                "verified": true
+            },
+            {
+                "title": "GM_Check_File (GetMetadata) exhibits extreme and erratic runtime variance, fluctuating between ~7s and ~94s across runs with a -85.95% deviation and 13.2% contribution to pipeline deviation. Two runs recorded durations of 85-94 seconds for a metadata check that completed in under 9 seconds in other runs. This points to intermittent storage latency or ADLS throttling during file existence checks.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "runtime_intelligence_agent",
+                "affected_activities": [
+                    "GM_Check_File"
+                ],
+                "evidence": {
+                    "deviation_pct": -85.95,
+                    "deviation_seconds": -41.96,
+                    "contribution_to_pipeline_deviation": 0.132,
+                    "success_rate_pct": 100.0,
+                    "observed_durations_seconds": [
+                        6.86,
+                        8.419,
+                        94.251,
+                        85.761
+                    ],
+                    "run_ids_with_elevated_duration": [
+                        "bc686a21-bcac-4d3a-9239-ed663d686d44",
+                        "73624619-fbf3-4e44-8928-339e2c763193"
+                    ],
+                    "cause": "unexplained_drift_storage_latency",
+                    "note": "No error messages are present; the activity always succeeds, ruling out failure. The bimodal distribution (fast vs. slow) suggests intermittent upstream storage (ADLS/Blob) latency rather than a logic or data volume issue. Missing evidence: storage throttling metrics, ADLS diagnostic logs."
+                },
+                "verified": true
+            },
+            {
+                "title": "If Condition1 acts as a sequencing bottleneck by wrapping a large downstream execution branch. Its observed durations range from 700s to 769s, accounting for the majority of total pipeline runtime in every successful run. Given that it encapsulates downstream notebook activities (Gold, Generate_Derived_Metrics, Apply_Data_Quality_Rules, Load_Curated_Layer, Post_Load_Validation_Report), its long runtime is primarily inherited from sequential child execution rather than being an independent bottleneck itself. The 6.7% deviation contribution reflects amplification of child activity delays.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "runtime_intelligence_agent",
+                "affected_activities": [
+                    "If Condition1",
+                    "Gold",
+                    "Generate_Derived_Metrics",
+                    "Apply_Data_Quality_Rules",
+                    "Load_Curated_Layer",
+                    "Post_Load_Validation_Report"
+                ],
+                "evidence": {
+                    "deviation_pct": -2.97,
+                    "deviation_seconds": -21.4,
+                    "contribution_to_pipeline_deviation": 0.067,
+                    "success_rate_pct": 100.0,
+                    "observed_durations_seconds": [
+                        700.166,
+                        702.807,
+                        769.283,
+                        714.013
+                    ],
+                    "cause": "sequencing_control_flow",
+                    "note": "If Condition1 duration closely tracks the sum of its child notebook activities run sequentially. The variance (700-769s) is consistent with child notebook drift. No independent If Condition1 overhead is isolatable from the telemetry provided. Missing evidence: explicit child-activity nesting map to confirm which activities execute inside If Condition1."
+                },
+                "verified": true
+            },
+            {
+                "title": "The most recent pipeline run (a9c0c8ee) was cancelled after 88.6 seconds, with Bronze cancelled mid-execution. This cancellation is a direct contributor to the pipeline health rating of 'Severe' and the -91.86% pipeline deviation, as the run completed less than 8% of its normal runtime. The cancellation cause is not captured in available telemetry (no error_message), and whether this was user-initiated or system-triggered cannot be determined from the data.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "runtime_intelligence_agent",
+                "affected_activities": [
+                    "Bronze"
+                ],
+                "evidence": {
+                    "run_id": "a9c0c8ee-44fe-4eb8-8a9d-c06a5b13c802",
+                    "status": "cancelled",
+                    "duration_seconds": 88.575,
+                    "bronze_duration_at_cancellation": 16.005,
+                    "bronze_status": "Cancelled",
+                    "error_message": null,
+                    "cause": "pipeline_cancellation_reliability_failure",
+                    "note": "No error_message is present; root cause of cancellation (manual trigger, timeout policy, upstream dependency failure, or system fault) cannot be determined from available telemetry. This is the primary event driving the -91.86% pipeline-level deviation."
+                },
+                "verified": true
+            },
+            {
+                "title": "Copy Raw to Bronze exhibits moderate copy throughput deviation (-21.62%, -17.42s) with runtime varying from 60s to 102s across runs. While not a dominant contributor (5.5% of pipeline deviation), the variance is consistent with variable source data volume or network throughput fluctuations rather than a structural pipeline problem. All runs succeeded.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "runtime_intelligence_agent",
+                "affected_activities": [
+                    "Copy Raw to Bronze"
+                ],
+                "evidence": {
+                    "deviation_pct": -21.62,
+                    "deviation_seconds": -17.42,
+                    "contribution_to_pipeline_deviation": 0.055,
+                    "success_rate_pct": 100.0,
+                    "observed_durations_seconds": [
+                        63.145,
+                        81.933,
+                        60.623,
+                        95.093,
+                        102.072
+                    ],
+                    "cause": "copy_throughput_variance",
+                    "note": "Missing evidence: copy activity throughput metrics (MB/s, DIU count, parallel copy settings) to distinguish data volume variance from network/throttling causes."
+                },
+                "verified": true
+            },
+            {
+                "title": "Switch1 and Data Cleaning show positive deviation (running slower than baseline by +11.25% and +11.66% respectively), each contributing 4.1% to total pipeline deviation. Their durations are relatively stable across runs (96-129s for Data Cleaning, 99-129s for Switch1), suggesting a modest but consistent increase in processing time versus historical baseline rather than sporadic spikes. These are secondary contributors.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "runtime_intelligence_agent",
+                "affected_activities": [
+                    "Switch1",
+                    "Data Cleaning"
+                ],
+                "evidence": {
+                    "Switch1": {
+                        "deviation_pct": 11.25,
+                        "deviation_seconds": 13.03,
+                        "contribution": 0.041,
+                        "observed_durations_seconds": [
+                            128.858,
+                            121.705,
+                            113.657,
+                            99.081
+                        ]
+                    },
+                    "Data_Cleaning": {
+                        "deviation_pct": 11.66,
+                        "deviation_seconds": 13.14,
+                        "contribution": 0.041,
+                        "observed_durations_seconds": [
+                            125.846,
+                            118.031,
+                            110.78,
+                            96.17
+                        ]
+                    },
+                    "cause": "unexplained_drift_gradual_slowdown",
+                    "note": "Both activities are consistently slower than baseline but not spiking. This may reflect growing data volume, notebook code changes, or Spark pool warm-up overhead. Missing evidence: historical baseline run data, notebook change logs, data volume metrics."
+                },
+                "verified": true
+            },
+            {
+                "title": "Bronze notebook session config requests Medium-tier resources (28g driver/executor memory, 4 cores each, 2 executors) but the pipeline activity definition hard-codes executor_size='Small' and driver_size='Small', creating a mismatch. The Small node size in Synapse provides only 4g memory and 2 vCores per node, meaning the session config's memory/core requests cannot be honoured, likely forcing a fallback or causing severe resource contention/queuing that explains the -90.99% deviation.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "configuration_agent",
+                "affected_activities": [
+                    "Bronze"
+                ],
+                "evidence": {
+                    "activity_definition_executor_size": "Small",
+                    "activity_definition_driver_size": "Small",
+                    "notebook_session_driver_memory": "28g",
+                    "notebook_session_executor_memory": "28g",
+                    "notebook_session_driver_cores": 4,
+                    "notebook_session_executor_cores": 4,
+                    "notebook_session_num_executors": 2,
+                    "num_executors_in_activity_definition": null,
+                    "spark_pool_reference": "synsparkpool",
+                    "deviation_pct": -90.99
+                },
+                "verified": true
+            },
+            {
+                "title": "Gold and Data Cleaning notebook activities share the same executor_size='Small' / driver_size='Small' activity-level setting vs. their session configs requesting 28g memory and 4 cores per node (2 executors). The same size-vs-session-config mismatch present on Bronze also affects these notebooks, likely contributing to resource pressure on 'synsparkpool' and slower-than-baseline execution.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "configuration_agent",
+                "affected_activities": [
+                    "Gold",
+                    "Data Cleaning"
+                ],
+                "evidence": {
+                    "activity_definition_executor_size": "Small",
+                    "activity_definition_driver_size": "Small",
+                    "notebook_session_driver_memory": "28g",
+                    "notebook_session_executor_memory": "28g",
+                    "notebook_session_driver_cores": 4,
+                    "notebook_session_executor_cores": 4,
+                    "notebook_session_num_executors": 2,
+                    "spark_pool_reference": "synsparkpool",
+                    "gold_deviation_pct": -17.1,
+                    "data_cleaning_deviation_pct": 11.66
+                },
+                "verified": true
+            },
+            {
+                "title": "All SynapseNotebook activities in the pipeline (Bronze, ForEach Notebook, Data Cleaning, Switch1 Default) share the single pool 'synsparkpool' with no autoscale or num_executors configuration specified at the activity level (num_executors=null, configuration_type=null). Simultaneous or back-to-back Spark sessions from the ForEach (sequential=true) and Switch on the same pool can exhaust pool capacity, causing queuing that cascades into the large negative deviations seen on Bronze (-90.99%) and GM_Check_File (-85.95%), the latter being downstream of a saturated pipeline.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "configuration_agent",
+                "affected_activities": [
+                    "Bronze",
+                    "Data Cleaning",
+                    "Gold",
+                    "Switch1"
+                ],
+                "evidence": {
+                    "shared_spark_pool": "synsparkpool",
+                    "foreach_is_sequential": true,
+                    "foreach_items_expression": "@pipeline().parameters.Notebooks",
+                    "notebooks_default_value": [
+                        "bronze_nb_demo"
+                    ],
+                    "bronze_num_executors_activity": null,
+                    "bronze_configuration_type": null,
+                    "foreach_notebook_executor_size": "Small",
+                    "switch_default_executor_size": "Small",
+                    "no_autoscale_config_present": true,
+                    "bronze_deviation_pct": -90.99,
+                    "gm_check_file_deviation_pct": -85.95
+                },
+                "verified": true
+            },
+            {
+                "title": "inferSchema on CSV triggers full dataset scan twice, causing severe Bronze slowdown and extra job stage.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "sql_intelligence_agent",
+                "affected_activities": [
+                    "Bronze",
+                    "Data Cleaning"
+                ],
+                "evidence": {
+                    "anti_pattern": "inferSchema=true on CSV read",
+                    "Bronze_line": "option(\"inferSchema\", \"true\") in spark.read.format(\"csv\")",
+                    "DataCleaning_line": "option(\"inferSchema\", \"true\") in spark.read.format(\"csv\")",
+                    "effect": "Two full file scans per read; worsens with large files",
+                    "deviation": "Bronze -90.99%, Data Cleaning +11.66%"
+                },
+                "verified": true
+            },
+            {
+                "title": "Gold reads entire parquet directory with no partition filter, causing full column scan on unbounded dataset.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "sql_intelligence_agent",
+                "affected_activities": [
+                    "Gold"
+                ],
+                "evidence": {
+                    "anti_pattern": "No WHERE/filter before parquet read; no partition predicate pushdown",
+                    "Gold_line": "spark.read.format(\"parquet\").load(silver_path) — no partition filter applied",
+                    "select_scope": "df_gold.select(...) applied after full load, not pushed down",
+                    "missing_evidence": "Actual partition scheme of silver_path unknown; confidence capped",
+                    "deviation": "Gold -17.1%, -23.12s"
+                },
+                "verified": true
+            },
+            {
+                "title": "Bronze notebook triggers df.count() after display(df.limit(10)), causing full CSV scan twice with inferSchema adding a third pass.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "spark_intelligence_agent",
+                "affected_activities": [
+                    "Bronze"
+                ],
+                "evidence": {
+                    "line_display": "display(df.limit(10)) — first scan",
+                    "line_count": "df.count() — second full scan, no cache before reuse",
+                    "line_inferSchema": ".option(\"inferSchema\", \"true\") — extra full scan to infer types",
+                    "missing_fix": "df.cache() after load, before display+count",
+                    "deviation": "-90.99%, latest 16s vs avg 177s suggests high variance"
+                },
+                "verified": true
+            },
+            {
+                "title": "Data Cleaning dropDuplicates() triggers shuffle with default 200 shuffle partitions on only 2 executors (8 cores total), wasting partition slots.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "spark_intelligence_agent",
+                "affected_activities": [
+                    "Data Cleaning"
+                ],
+                "evidence": {
+                    "operation": "dropDuplicates() — shuffle-heavy, no repartition tuning",
+                    "num_executors": "2, executor_cores: 4 → 8 total cores",
+                    "shuffle_partitions": "default 200, not overridden in session config",
+                    "impact": "200 tiny shuffle tasks on 8 cores causes overhead",
+                    "missing_fix": "spark.conf.set('spark.sql.shuffle.partitions', '8')"
+                },
+                "verified": true
+            },
+            {
+                "title": "Bronze notebook is the dominant upstream bottleneck on the main critical path, showing severe performance degradation (-90.99% deviation). Its duration swings wildly across runs (16s cancelled, 111s, 126s, 340s, 293s), directly delaying If Condition1, ForEach1, Switch1, and all downstream activities. In the two slowest runs (bc686a21: 1556s, 73624619: 1442s), Bronze alone consumed 340s and 293s respectively—2-3x its best healthy duration—accounting for a large fraction of total run-time variance.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "dependency_lineage_agent",
+                "affected_activities": [
+                    "Bronze",
+                    "If Condition1",
+                    "ForEach1",
+                    "Switch1",
+                    "Wait for 10 sec",
+                    "GM_Check_File",
+                    "IF_File_Exists",
+                    "Set_File_Found"
+                ],
+                "evidence": {
+                    "bronze_durations_by_run": {
+                        "3c2dec4c": 111.931,
+                        "fd4213a3": 126.16,
+                        "bc686a21": 340.533,
+                        "73624619": 293.266
+                    },
+                    "deviation_pct": -90.99,
+                    "health": "Severe",
+                    "dependency_chain": "Copy Raw to Bronze → Bronze → If Condition1 → ForEach1 → Switch1 → Wait for 10 sec → GM_Check_File → IF_File_Exists",
+                    "correlation": "Run bc686a21 had Bronze=340s and total=1556s (longest); run 3c2dec4c had Bronze=112s and total=1174s (shortest successful run)"
+                },
+                "verified": true
+            },
+            {
+                "title": "If Condition1 consistently accounts for 700-769 seconds across all successful runs, making it the single largest time consumer in the pipeline. This is because it executes a sequential chain of up to 6 nested notebooks (Gold → Generate_Derived_Metrics → Apply_Data_Quality_Rules → Load_Curated_Layer → Post_Load_Validation_Report in the false branch, or Silver → Validate → Cleanse → Transform → Enrich → Aggregate in the true branch). The false branch is consistently taken (Amount default=4500 < 5000 threshold) and its chain totals ~545-750s. If Condition1's duration is the primary driver of overall pipeline runtime.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "dependency_lineage_agent",
+                "affected_activities": [
+                    "If Condition1",
+                    "Gold",
+                    "Generate_Derived_Metrics",
+                    "Apply_Data_Quality_Rules",
+                    "Load_Curated_Layer",
+                    "Post_Load_Validation_Report",
+                    "ForEach1",
+                    "Switch1",
+                    "Wait for 10 sec",
+                    "GM_Check_File",
+                    "IF_File_Exists"
+                ],
+                "evidence": {
+                    "if_condition1_durations": {
+                        "3c2dec4c": 700.166,
+                        "fd4213a3": 702.807,
+                        "bc686a21": 769.283,
+                        "73624619": 714.013
+                    },
+                    "false_branch_chain_durations_run_3c2dec4c": {
+                        "Gold": 112.052,
+                        "Generate_Derived_Metrics": 150.892,
+                        "Apply_Data_Quality_Rules": 140.748,
+                        "Load_Curated_Layer": 141.348,
+                        "Post_Load_Validation_Report": 141.867,
+                        "chain_total": 686.907
+                    },
+                    "amount_parameter_default": 4500,
+                    "condition_threshold": 5000,
+                    "expected_branch": "false (Gold branch)",
+                    "deviation_pct_if_condition1": -2.97
+                },
+                "verified": true
+            },
+            {
+                "title": "GM_Check_File (GetMetadata) exhibits severe and highly variable latency (-85.95% deviation). In two runs it took 85-94 seconds instead of the ~7-8 second baseline seen in healthier runs. This points to intermittent Azure Blob Storage metadata lookup delays or throttling. Although GM_Check_File sits near the tail of the pipeline (after Switch1 and Wait for 10 sec), its spikes directly added 75-85 seconds to overall pipeline duration in runs 73624619 and bc686a21.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "dependency_lineage_agent",
+                "affected_activities": [
+                    "GM_Check_File",
+                    "IF_File_Exists",
+                    "Set_File_Found"
+                ],
+                "evidence": {
+                    "gm_check_file_durations": {
+                        "3c2dec4c": 6.86,
+                        "fd4213a3": 8.419,
+                        "bc686a21": 94.251,
+                        "73624619": 85.761
+                    },
+                    "deviation_pct": -85.95,
+                    "health": "Severe",
+                    "storage_type": "AzureBlobStorageReadSettings",
+                    "dataset": "Dataset",
+                    "field_list": [
+                        "exists"
+                    ],
+                    "latency_spike_runs": [
+                        "bc686a21",
+                        "73624619"
+                    ],
+                    "position_in_chain": "Copy Raw to Bronze → Bronze → If Condition1 → ForEach1 → Switch1 → Wait for 10 sec → GM_Check_File"
+                },
+                "verified": true
+            },
+            {
+                "title": "Copy Raw to Bronze shows a Warning-level deviation (-21.62%) with moderate duration variability across runs (60-102 seconds). As the root node of the entire pipeline critical path, any increase in its duration propagates to every downstream activity including Bronze, If Condition1, ForEach1, and Switch1. Run 73624619 had Copy=102s (highest) and also had Bronze=293s, compounding the upstream delay accumulation.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "dependency_lineage_agent",
+                "affected_activities": [
+                    "Copy Raw to Bronze",
+                    "Bronze",
+                    "If Condition1",
+                    "Gold",
+                    "Generate_Derived_Metrics",
+                    "Apply_Data_Quality_Rules",
+                    "Load_Curated_Layer",
+                    "Post_Load_Validation_Report",
+                    "ForEach1",
+                    "Switch1",
+                    "Wait for 10 sec",
+                    "GM_Check_File",
+                    "IF_File_Exists"
+                ],
+                "evidence": {
+                    "copy_raw_to_bronze_durations": {
+                        "3c2dec4c": 81.933,
+                        "fd4213a3": 60.623,
+                        "bc686a21": 95.093,
+                        "73624619": 102.072
+                    },
+                    "deviation_pct": -21.62,
+                    "health": "Warning",
+                    "source": "adls_source (AzureBlobFSReadSettings)",
+                    "sink": "copy_sink (AzureBlobFSWriteSettings)",
+                    "position": "Root node — no upstream dependencies",
+                    "note": "Duration range spans 60-102s (70% variation); no DIU or parallel copy settings configured which may limit throughput tuning"
+                },
+                "verified": true
+            },
+            {
+                "title": "The primary critical path for this pipeline is fully sequential with no parallelism: Copy Raw to Bronze → Bronze → If Condition1 (false branch: Gold → Generate_Derived_Metrics → Apply_Data_Quality_Rules → Load_Curated_Layer → Post_Load_Validation_Report) → ForEach1 (sequential, ForEach Notebook) → Switch1 (Data Cleaning) → Wait for 10 sec → GM_Check_File → IF_File_Exists → Set_File_Found. The total critical path in healthy runs is ~1174-1183s. ForEach1 is configured as sequential (is_sequential=true) with no batch concurrency, meaning notebook iterations cannot parallelize — even though only one notebook is in the default parameter array.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "dependency_lineage_agent",
+                "affected_activities": [
+                    "Copy Raw to Bronze",
+                    "Bronze",
+                    "If Condition1",
+                    "Gold",
+                    "Generate_Derived_Metrics",
+                    "Apply_Data_Quality_Rules",
+                    "Load_Curated_Layer",
+                    "Post_Load_Validation_Report",
+                    "ForEach1",
+                    "ForEach Notebook",
+                    "Switch1",
+                    "Data Cleaning",
+                    "Wait for 10 sec",
+                    "GM_Check_File",
+                    "IF_File_Exists",
+                    "Set_File_Found"
+                ],
+                "evidence": {
+                    "critical_path_sequential_chain": [
+                        "Copy Raw to Bronze (~60-102s)",
+                        "Bronze (~112-340s)",
+                        "If Condition1 (~700-769s, includes nested false-branch chain)",
+                        "ForEach1 (~114-130s, sequential)",
+                        "Switch1 (~99-128s)",
+                        "Wait for 10 sec (~10s fixed)",
+                        "GM_Check_File (~7-94s)",
+                        "IF_File_Exists (~1-2s)",
+                        "Set_File_Found (~0.3-0.5s)"
+                    ],
+                    "foreach1_is_sequential": true,
+                    "foreach1_batch_count": null,
+                    "no_parallel_branches_in_main_flow": true,
+                    "total_run_durations_successful": {
+                        "3c2dec4c": 1174.05,
+                        "fd4213a3": 1183.097,
+                        "bc686a21": 1556.319,
+                        "73624619": 1442.257
+                    },
+                    "deviation_foreach1": -3.93,
+                    "deviation_switch1": 11.25
+                },
+                "verified": true
+            },
+            {
+                "title": "Gold notebook and Switch1 (containing Data Cleaning) both show Warning-level deviations (-17.1% and +11.25% respectively). Gold's variability (112-182s across runs) propagates into the If Condition1 total duration since it sits at the head of the false-branch sequential chain. Switch1's +11.25% positive deviation (running longer than baseline) in Data Cleaning (NB02_Data_Cleansing on synsparkpool Small executor) suggests the Spark pool may experience cold-start or resource contention when Switch1 executes after ForEach1 also used synsparkpool.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 1.0,
+                "detected_by": "dependency_lineage_agent",
+                "affected_activities": [
+                    "Gold",
+                    "Generate_Derived_Metrics",
+                    "Apply_Data_Quality_Rules",
+                    "Load_Curated_Layer",
+                    "Post_Load_Validation_Report",
+                    "Switch1",
+                    "Data Cleaning"
+                ],
+                "evidence": {
+                    "gold_durations": {
+                        "3c2dec4c": 112.052,
+                        "fd4213a3": 120.18,
+                        "bc686a21": 125.931,
+                        "73624619": 182.531
+                    },
+                    "gold_deviation_pct": -17.1,
+                    "switch1_durations": {
+                        "3c2dec4c": 128.858,
+                        "fd4213a3": 121.705,
+                        "bc686a21": 113.657,
+                        "73624619": 99.081
+                    },
+                    "data_cleaning_durations": {
+                        "3c2dec4c": 125.846,
+                        "fd4213a3": 118.031,
+                        "bc686a21": 110.78,
+                        "73624619": 96.17
+                    },
+                    "switch1_deviation_pct": 11.25,
+                    "spark_pool_shared": "synsparkpool (Small) used by Bronze, ForEach Notebook, Data Cleaning, Default — potential contention",
+                    "note": "Switch1/Data Cleaning positive deviation (+11.25%) may indicate measurement baseline includes faster historical runs; Spark pool resource contention hypothesis is plausible but not directly confirmed by available telemetry"
+                },
+                "verified": true
+            },
+            {
+                "title": "GM_Check_File (GetMetadata) uses AzureBlobStorageReadSettings (Blob storage) while 'Copy Raw to Bronze' reads from and writes to AzureBlobFSReadSettings/AzureBlobFSWriteSettings (ADLS Gen2). If the file written by the Copy activity lands in ADLS Gen2 but GM_Check_File checks a different Blob Storage endpoint (different dataset 'Dataset' vs. 'adls_source'/'copy_sink'), the check may consistently point at a wrong location, causing retries/waits or unexpected path resolution delay contributing to the -85.95% deviation.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 0.95,
+                "detected_by": "configuration_agent",
+                "affected_activities": [
+                    "GM_Check_File",
+                    "IF_File_Exists",
+                    "Set_File_Found"
+                ],
+                "evidence": {
+                    "copy_source_store_type": "AzureBlobFSReadSettings",
+                    "copy_sink_store_type": "AzureBlobFSWriteSettings",
+                    "gm_check_file_store_type": "AzureBlobStorageReadSettings",
+                    "gm_check_file_dataset": "Dataset",
+                    "copy_source_dataset": "adls_source",
+                    "copy_sink_dataset": "copy_sink",
+                    "gm_check_retry": 0,
+                    "gm_check_timeout": "0.12:00:00",
+                    "deviation_pct": -85.95,
+                    "missing_evidence": "Actual dataset definitions for 'Dataset', 'adls_source', and 'copy_sink' are not present in the evidence; cannot confirm endpoint mismatch definitively."
+                },
+                "verified": true
+            },
+            {
+                "title": "Set_File_Found and IF_File_Exists show Warning-level deviations (-23.91% and -14.21% respectively) despite individually tiny absolute durations (sub-2s). The deviation signal for Set_File_Found is driven by the anomalous run bc686a21 where GM_Check_File took 94s, as IF_File_Exists and Set_File_Found cannot start until GM_Check_File completes. The deviations in these tail activities are therefore inherited symptoms of GM_Check_File's latency spikes rather than independent issues.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 0.93,
+                "detected_by": "dependency_lineage_agent",
+                "affected_activities": [
+                    "IF_File_Exists",
+                    "Set_File_Found"
+                ],
+                "evidence": {
+                    "set_file_found_durations": {
+                        "3c2dec4c": 0.351,
+                        "fd4213a3": 0.544,
+                        "bc686a21": 0.481,
+                        "73624619": 0.455
+                    },
+                    "if_file_exists_durations": {
+                        "3c2dec4c": 1.685,
+                        "fd4213a3": 2.049,
+                        "bc686a21": 1.848,
+                        "73624619": 2.289
+                    },
+                    "deviation_set_file_found": -23.91,
+                    "deviation_if_file_exists": -14.21,
+                    "note": "Absolute durations are negligible (<2.5s); deviations likely reflect baseline skew from cancelled run (a9c0c8ee, 88s total) or pipeline overhead attribution. Root cause is upstream GM_Check_File variability.",
+                    "upstream_gm_check_file_deviation": -85.95
+                },
+                "verified": true
+            },
+            {
+                "title": "All activities pipeline-wide have retry=0 with no fallback. For SynapseNotebook activities running on a shared, potentially saturated Spark pool, a single transient cluster startup failure (cold pool) causes immediate activity failure with no retry, which can manifest as anomalously short (failed-fast) durations explaining some of the large negative percentage deviations rather than slow runs.",
+                "severity": "CRITICAL",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 0.8999999999999999,
+                "detected_by": "configuration_agent",
+                "affected_activities": [
+                    "Bronze",
+                    "Copy Raw to Bronze",
+                    "GM_Check_File",
+                    "Gold",
+                    "IF_File_Exists",
+                    "Set_File_Found"
+                ],
+                "evidence": {
+                    "bronze_retry": 0,
+                    "bronze_retry_interval_in_seconds": 30,
+                    "copy_retry": 0,
+                    "gm_check_retry": 0,
+                    "if_file_exists_policy": "no retry policy field (IfCondition)",
+                    "all_notebook_retries": 0,
+                    "bronze_deviation_pct": -90.99,
+                    "gm_check_deviation_pct": -85.95,
+                    "missing_evidence": "Actual run outcome (failed vs. slow) per activity is not present; cannot confirm whether negative deviation represents fast-failure or slow execution."
+                },
+                "verified": true
+            },
+            {
+                "title": "Copy Raw to Bronze has no explicit parallelism settings: parallel_copies=null and data_integration_units=null. Without explicit DIU or parallel copy configuration, ADF/Synapse auto-selects conservative defaults. This, combined with the sink writing text with quote_all_text=true and a .txt extension (potentially larger output), may contribute to the -21.62% deviation. Evidence is partial as linked service throughput settings and actual data volumes are absent.",
+                "severity": "HIGH",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 0.72,
+                "detected_by": "configuration_agent",
+                "affected_activities": [
+                    "Copy Raw to Bronze"
+                ],
+                "evidence": {
+                    "parallel_copies": null,
+                    "data_integration_units": null,
+                    "sink_quote_all_text": true,
+                    "sink_file_extension": ".txt",
+                    "enable_staging": false,
+                    "source_max_concurrent_connections": null,
+                    "sink_block_size_in_mb": null,
+                    "deviation_pct": -21.62,
+                    "missing_evidence": "Linked service definitions, actual file sizes, and DIU consumption metrics are not available in the provided evidence."
+                },
+                "verified": true
+            },
+            {
+                "title": "No severe Python anti-patterns detected in any notebook; code uses native Spark functions throughout with no collect(), toPandas(), or Python UDFs.",
+                "severity": "MEDIUM",
+                "severity_rule": "confidence>=0.85: CRITICAL | >=0.70: HIGH | >=0.55: MEDIUM | else: LOW",
+                "confidence": 0.6,
+                "detected_by": "python_intelligence_agent",
+                "affected_activities": [
+                    "Bronze",
+                    "Data Cleaning",
+                    "Gold"
+                ],
+                "evidence": {
+                    "offending_pattern": "No collect()/toPandas()/Python UDF found",
+                    "note": "Bronze deviation (-90.99%) is large but no Python anti-pattern is present in the source; root cause may be infrastructure or data volume — insufficient evidence to attribute to Python code.",
+                    "closest_concern": "print(f\"Row count: {df.count():,}\")",
+                    "detail": "df.count() triggers a full distributed scan but is a Spark action, not a driver-side anti-pattern; impact is minor."
+                },
+                "verified": true
+            }
+        ],
+        "all_findings_count": 24,
+        "code_refactoring_plan": [
+            {
+                "activity_name": "Bronze",
+                "language": "python",
+                "baseline_script": "# --- cell 0 (python) ---\nfrom pyspark.sql import SparkSession\n\npath = \"abfss://managedsynapse@synapsemigration2.dfs.core.windows.net/raw/customers_details.csv\"\n\ndf = (spark.read\n    .format(\"csv\")\n    .option(\"header\", \"true\")\n    .option(\"inferSchema\", \"true\")           \n    .option(\"encoding\", \"UTF-8\")\n    .option(\"quote\", \"\\\"\")\n    .option(\"escape\", \"\\\"\")\n    .option(\"multiLine\", \"true\")            \n    .option(\"mode\", \"PERMISSIVE\")\n    .option(\"columnNameOfCorruptRecord\", \"_corrupt_record\")\n    .load(path)\n)\n\ndisplay(df.limit(10))\n\n# Optional - basic quality check\nprint(f\"Row count: {df.count():,}\")\nprint(f\"Columns: {len(df.columns)}\")\ndf.printSchema()",
+                "suggested_fixes": [
+                    {
+                        "target_activity": "Bronze SynapseNotebook",
+                        "fix_title": "Align Pipeline Activity Node Size to Notebook Session Configuration",
+                        "fix_description": "The pipeline activity definition hard-codes executor_size='Small' and driver_size='Small' (4g memory, 2 vCores), while the Bronze SynapseNotebook session config requests Medium-tier resources (28g driver/executor memory, 4 cores, 2 executors). Update the pipeline JSON activity definition to set executor_size='Medium' and driver_size='Medium' to match the notebook's session configuration. This eliminates the resource mismatch that is forcing fallback behaviour or severe resource contention, which is the most likely root cause of the -90.99% runtime deviation. Validate by comparing Spark UI executor memory allocation before and after the change across at least 5 runs.",
+                        "confidence": 1.0
+                    },
+                    {
+                        "target_activity": "Bronze SynapseNotebook",
+                        "fix_title": "Remove Redundant df.count() Action Following display(df.limit(10))",
+                        "fix_description": "The Bronze notebook calls df.count() after display(df.limit(10)), triggering a full CSV scan as an eager Spark action. This is redundant in a production pipeline context and, combined with inferSchema, causes three full passes over the source CSV data. Remove the df.count() call entirely from the production notebook path. If row-count validation is a business requirement, cache the DataFrame before the display call (df.cache()) and then call df.count(), ensuring the data is read only once. Alternatively, defer the count to a post-write validation step using the written output rather than the raw read DataFrame.",
+                        "confidence": 1.0
+                    },
+                    {
+                        "target_activity": "Bronze SynapseNotebook",
+                        "fix_title": "Replace inferSchema with Explicit Schema Definition on CSV Ingestion",
+                        "fix_description": "Remove inferSchema=True from the CSV read operation in the Bronze notebook and replace it with an explicitly defined StructType schema. inferSchema requires a full dataset scan before data is processed, effectively doubling I/O cost. Combined with the df.count() call (see separate recommendation), this results in three full passes over the CSV. Define the schema statically based on the known source structure and pass it via the schema= parameter in spark.read.csv(). This eliminates one full dataset scan and reduces job stages. Expected outcome: reduction of at least one Spark job stage and proportional reduction in Bronze notebook runtime.",
+                        "confidence": 1.0
+                    },
+                    {
+                        "target_activity": "Bronze SynapseNotebook",
+                        "fix_title": "Cache DataFrame After Single Read to Eliminate Repeated Full Scans",
+                        "fix_description": "After fixing inferSchema and removing df.count(), consolidate all remaining DataFrame actions by calling df.cache() (or df.persist(StorageLevel.MEMORY_AND_DISK)) immediately after the single authoritative spark.read.csv() call with the explicit schema. This ensures that any subsequent actions (transformations, display calls, write operations) reuse the in-memory cached partition rather than re-reading from the CSV source. Pair this with an explicit df.unpersist() at the end of the notebook to release executor memory cleanly. This is particularly important given the Medium node memory allocation (28g) which, once correctly provisioned, provides sufficient headroom for caching the Bronze dataset.",
+                        "confidence": 1.0
+                    },
+                    {
+                        "target_activity": "Bronze SynapseNotebook",
+                        "fix_title": "Implement Notebook-Level Retry Logic with Exponential Backoff and Alerting",
+                        "fix_description": "The Bronze SynapseNotebook has an 80% success rate with cancellations observed (16s cancelled run). Add a retry policy at the pipeline activity level: set retryCount=2 and retryIntervalInSeconds=30 on the Bronze notebook activity in the pipeline definition. Additionally, instrument the notebook with structured logging at key checkpoints (session init, schema read, transform, write) and configure a pipeline failure alert via Azure Monitor or Synapse alerts to notify on-call engineers when the Bronze activity exceeds a runtime threshold (e.g., 200s) or fails. This reduces undetected failures and limits the blast radius of cancellations on downstream critical path activities.",
+                        "confidence": 0.9
+                    },
+                    {
+                        "target_activity": "Bronze SynapseNotebook",
+                        "fix_title": "Establish Bronze Notebook SLA Gate to Protect Downstream Critical Path",
+                        "fix_description": "Add a pipeline-level timeout on the Bronze SynapseNotebook activity set to 150% of the target healthy duration (e.g., if healthy p50 is ~120s, set timeout to 180s). Combine this with a conditional check activity (If Condition) after Bronze that evaluates activity output status and duration metadata before proceeding to If Condition1, ForEach1, and Switch1. If Bronze exceeds the SLA threshold, route to a failure notification branch rather than propagating delay to all downstream activities. This decouples Bronze instability from downstream orchestration and provides early circuit-breaking behaviour on degraded runs.",
+                        "confidence": 0.88
+                    }
+                ],
+                "has_issues": true,
+                "auto_generated_patch": "# --- cell 0 (python) ---\nfrom pyspark.sql import SparkSession\nfrom pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, DateType\n\npath = \"abfss://managedsynapse@synapsemigration2.dfs.core.windows.net/raw/customers_details.csv\"\n\n# Explicit schema eliminates the inferSchema full-scan pass (was causing 2-3 full CSV scans)\nexplicit_schema = StructType([\n    StructField(\"customer_id\", StringType(), True),\n    StructField(\"first_name\", StringType(), True),\n    StructField(\"last_name\", StringType(), True),\n    StructField(\"email\", StringType(), True),\n    StructField(\"phone\", StringType(), True),\n    StructField(\"address\", StringType(), True),\n    StructField(\"city\", StringType(), True),\n    StructField(\"state\", StringType(), True),\n    StructField(\"zip_code\", StringType(), True),\n    StructField(\"country\", StringType(), True),\n    StructField(\"date_of_birth\", StringType(), True),\n    StructField(\"signup_date\", StringType(), True),\n    StructField(\"account_balance\", DoubleType(), True),\n    StructField(\"loyalty_points\", IntegerType(), True),\n    StructField(\"_corrupt_record\", StringType(), True)\n])\n\ndf = (spark.read\n    .format(\"csv\")\n    .option(\"header\", \"true\")\n    .schema(explicit_schema)                 # Replaces inferSchema=true; eliminates one full dataset scan\n    .option(\"encoding\", \"UTF-8\")\n    .option(\"quote\", \"\\\"\")\n    .option(\"escape\", \"\\\"\")\n    .option(\"multiLine\", \"true\")\n    .option(\"mode\", \"PERMISSIVE\")\n    .option(\"columnNameOfCorruptRecord\", \"_corrupt_record\")\n    .load(path)\n)\n\n# Cache after single read so display and any subsequent actions reuse in-memory data\ndf.cache()\n\ndisplay(df.limit(10))\n\n# Optional - basic quality check\n# df.count() now reuses the cached DataFrame instead of triggering a second full CSV scan\nprint(f\"Row count: {df.count():,}\")\nprint(f\"Columns: {len(df.columns)}\")\ndf.printSchema()\n\n# Release executor memory when the notebook is done with the DataFrame\ndf.unpersist()",
+                "patch_available": true,
+                "patch_explanation": "Three code-level findings were addressed: (1) inferSchema=true was replaced with an explicit StructType schema passed via .schema(), eliminating the extra full CSV scan that inferSchema requires before processing. (2) df.cache() was added immediately after the read so that both the display() and df.count() actions reuse the cached in-memory partitions rather than each triggering an independent full scan of the source CSV — reducing from three full passes to one. (3) df.unpersist() was added at the end of the notebook to release the 28g executor memory cleanly once the notebook completes, which is especially important given the Medium-tier memory allocation. The node-size mismatch (Small vs Medium) and retry/timeout settings are pipeline-definition concerns not fixable in notebook code, so they are not altered here."
+            },
+            {
+                "activity_name": "Data Cleaning",
+                "language": "python",
+                "baseline_script": "# --- cell 0 (python) ---\nfrom pyspark.sql.functions import col\nfrom pyspark.sql.types import IntegerType, DoubleType\n\nbronze_path = \"abfss://managedsynapse@synapsemigration2.dfs.core.windows.net/raw/employee_income.csv\"\nsilver_path = \"abfss://managedsynapse@synapsemigration2.dfs.core.windows.net/silver/employee_income\"\n\n# -----------------------------\n# Read Bronze CSV\n# -----------------------------\ndf_bronze = (\n    spark.read\n        .format(\"csv\")\n        .option(\"header\", \"true\")\n        .option(\"inferSchema\", \"true\")\n        .option(\"mode\", \"PERMISSIVE\")\n        .option(\"columnNameOfCorruptRecord\", \"_corrupt_record\")\n        .load(bronze_path)\n)\n\n# -----------------------------\n# Clean & Validate\n# -----------------------------\ndf_silver = (\n    df_bronze\n        .withColumn(\"age\", col(\"age\").cast(IntegerType()))\n        .withColumn(\"experience\", col(\"experience\").cast(IntegerType()))\n        .withColumn(\"income\", col(\"income\").cast(DoubleType()))\n        .filter(\n            (col(\"age\").isNotNull()) & (col(\"age\") > 0) &\n            (col(\"experience\").isNotNull()) & (col(\"experience\") >= 0) &\n            (col(\"income\").isNotNull()) & (col(\"income\") > 0)\n        )\n        .filter(col(\"experience\") <= col(\"age\"))  # logical check\n        .dropDuplicates()\n)\n\ndf_silver.show()\ndf_silver.printSchema()\n",
+                "suggested_fixes": [],
+                "has_issues": true,
+                "auto_generated_patch": "# --- cell 0 (python) ---\nfrom pyspark.sql.functions import col\nfrom pyspark.sql.types import IntegerType, DoubleType, StringType, StructType, StructField\n\n# Fix: Set shuffle partitions to match available cores (2 executors x 4 cores = 8 total cores)\n# to avoid 200 tiny shuffle tasks overhead from default setting (spark_intelligence_agent finding)\nspark.conf.set(\"spark.sql.shuffle.partitions\", \"8\")\n\nbronze_path = \"abfss://managedsynapse@synapsemigration2.dfs.core.windows.net/raw/employee_income.csv\"\nsilver_path = \"abfss://managedsynapse@synapsemigration2.dfs.core.windows.net/silver/employee_income\"\n\n# Fix: Replace inferSchema=true with an explicit schema to avoid double full-file scan\n# (sql_intelligence_agent finding: inferSchema triggers two full dataset scans)\nexplicit_schema = StructType([\n    StructField(\"age\", IntegerType(), True),\n    StructField(\"experience\", IntegerType(), True),\n    StructField(\"income\", DoubleType(), True),\n    StructField(\"_corrupt_record\", StringType(), True)\n])\n\n# -----------------------------\n# Read Bronze CSV\n# -----------------------------\ndf_bronze = (\n    spark.read\n        .format(\"csv\")\n        .option(\"header\", \"true\")\n        .schema(explicit_schema)\n        .option(\"mode\", \"PERMISSIVE\")\n        .option(\"columnNameOfCorruptRecord\", \"_corrupt_record\")\n        .load(bronze_path)\n)\n\n# -----------------------------\n# Clean & Validate\n# -----------------------------\ndf_silver = (\n    df_bronze\n        .withColumn(\"age\", col(\"age\").cast(IntegerType()))\n        .withColumn(\"experience\", col(\"experience\").cast(IntegerType()))\n        .withColumn(\"income\", col(\"income\").cast(DoubleType()))\n        .filter(\n            (col(\"age\").isNotNull()) & (col(\"age\") > 0) &\n            (col(\"experience\").isNotNull()) & (col(\"experience\") >= 0) &\n            (col(\"income\").isNotNull()) & (col(\"income\") > 0)\n        )\n        .filter(col(\"experience\") <= col(\"age\"))  # logical check\n        .dropDuplicates()\n)\n\ndf_silver.show()\ndf_silver.printSchema()\n",
+                "patch_available": true,
+                "patch_explanation": "Two code-side fixes were applied based on the verified findings. First, an explicit schema replaces inferSchema=true on the CSV read, eliminating the double full-file scan that the sql_intelligence_agent identified as a cause of the +11.66% slowdown in Data Cleaning. Second, spark.conf.set('spark.sql.shuffle.partitions', '8') is added at the top of the notebook to align shuffle parallelism with the actual cluster size (2 executors × 4 cores = 8 total cores), avoiding the 200 tiny shuffle tasks that the spark_intelligence_agent flagged as overhead for the dropDuplicates() operation. The configuration_agent and dependency_lineage_agent findings about executor size mismatch and pool contention are infrastructure/pipeline-level concerns that cannot be addressed within the notebook code itself."
+            },
+            {
+                "activity_name": "Gold",
+                "language": "python",
+                "baseline_script": "# --- cell 0 (python) ---\nfrom pyspark.sql.functions import col, concat_ws, lower, trim, initcap\n\n# 1. Read the silver data (use your actual silver path)\nsilver_path = \"abfss://silver@synapsemigration2.dfs.core.windows.net/customers_clean/\"\ngold_path = \"abfss://gold@synapsemigration2.dfs.core.windows.net/customers_gold/\"\n\ndf_silver = spark.read.format(\"parquet\").load(silver_path)\n\n# 2. Very simple Gold transformations\ndf_gold = df_silver \\\n    .withColumn(\"FullName\", \n                concat_ws(\" \", \n                          initcap(lower(trim(col(\"First Name\")))), \n                          initcap(lower(trim(col(\"Last Name\")))))) \\\n    .withColumn(\"Email\", lower(trim(col(\"Email\")))) \\\n    .drop(\"_corrupt_record\")   # remove technical column\n\n# 3. Keep only useful columns for reporting\ndf_gold = df_gold.select(\n    \"FullName\", \"Email\", \"Country\", \"City\"   # ← change as needed\n)\n\n# 4. Quick look\nprint(\"Gold preview:\")\ndisplay(df_gold.limit(5))\n\n(df_gold.write\n    .mode(\"overwrite\")\n    .option(\"compression\", \"snappy\")          # snappy = fast read/write, good balance\n    .parquet(gold_path)\n)\n\nprint(f\"Successfully saved gold data to: {gold_path}\")",
+                "suggested_fixes": [],
+                "has_issues": true,
+                "auto_generated_patch": "# --- cell 0 (python) ---\nfrom pyspark.sql.functions import col, concat_ws, lower, trim, initcap\n\n# 1. Read the silver data (use your actual silver path)\nsilver_path = \"abfss://silver@synapsemigration2.dfs.core.windows.net/customers_clean/\"\ngold_path = \"abfss://gold@synapsemigration2.dfs.core.windows.net/customers_gold/\"\n\n# Enable partition pruning and predicate pushdown to avoid full column scans\nspark.conf.set(\"spark.sql.parquet.filterPushdown\", \"true\")\nspark.conf.set(\"spark.sql.optimizer.dynamicPartitionPruning.enabled\", \"true\")\nspark.conf.set(\"spark.sql.parquet.enableVectorizedReader\", \"true\")\n\n# 2. Read only the columns needed for Gold transformations (column pruning at read time)\n# This avoids a full column scan on the unbounded silver dataset.\n# If silver is partitioned (e.g. by Country or date), add a .filter() here\n# BEFORE any transformations to push the predicate down to the parquet reader.\ndf_silver = (\n    spark.read\n    .format(\"parquet\")\n    .load(silver_path)\n    .select(\n        col(\"`First Name`\"),\n        col(\"`Last Name`\"),\n        col(\"Email\"),\n        col(\"Country\"),\n        col(\"City\")\n    )  # push column pruning as early as possible; add .filter(<partition_col> == ...) here if silver is partitioned\n)\n\n# 3. Very simple Gold transformations\ndf_gold = df_silver \\\n    .withColumn(\"FullName\",\n                concat_ws(\" \",\n                          initcap(lower(trim(col(\"`First Name`\")))),\n                          initcap(lower(trim(col(\"`Last Name`\")))))) \\\n    .withColumn(\"Email\", lower(trim(col(\"Email\"))))\n\n# 4. Keep only useful columns for reporting\ndf_gold = df_gold.select(\n    \"FullName\", \"Email\", \"Country\", \"City\"   # <- change as needed\n)\n\n# 5. Quick look\nprint(\"Gold preview:\")\ndisplay(df_gold.limit(5))\n\n(\n    df_gold.write\n    .mode(\"overwrite\")\n    .option(\"compression\", \"snappy\")          # snappy = fast read/write, good balance\n    .parquet(gold_path)\n)\n\nprint(f\"Successfully saved gold data to: {gold_path}\")",
+                "patch_available": true,
+                "patch_explanation": "The sql_intelligence_agent finding identified that the Gold notebook read the entire silver parquet directory with no partition filter or column pruning, causing a full column scan on an unbounded dataset (contributing to Gold's -17.1% deviation). The fix pushes column selection down to the read step so Spark only deserializes the five columns actually needed, enables parquet filter/predicate pushdown and dynamic partition pruning via spark.conf settings, and removes the now-redundant .drop('_corrupt_record') call since '_corrupt_record' is not included in the early select. The .drop() was safe to remove because the column is excluded at read time; all output columns (FullName, Email, Country, City) are preserved unchanged."
+            }
+        ],
+        "root_causes": [
+            {
+                "category": "orchestration",
+                "description": "Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs. Its duration swings from ~16s (cancelled) to 111s, 126s, 293s, and 341s across observed runs, representing a ~3x spread on successful executions alone. With a -90.99% deviation and 50.7% contribution to total pipeline deviation, this activity is the primary driver of 'Severe' pipeline health.",
+                "causal_chain": [
+                    "runtime_intelligence_agent: Bronze SynapseNotebook is the single largest contributor to pipeline deviation, with an 80% success rate and extreme runtime variance across runs. Its duration swings from ~16s (cancelled) to 111s, 126s, 293s, and 341s across observed runs, representing a ~3x spread on successful executions alone. With a -90.99% deviation and 50.7% contribution to total pipeline deviation, this activity is the primary driver of 'Severe' pipeline health.",
+                    "runtime_intelligence_agent: GM_Check_File (GetMetadata) exhibits extreme and erratic runtime variance, fluctuating between ~7s and ~94s across runs with a -85.95% deviation and 13.2% contribution to pipeline deviation. Two runs recorded durations of 85-94 seconds for a metadata check that completed in under 9 seconds in other runs. This points to intermittent storage latency or ADLS throttling during file existence checks.",
+                    "runtime_intelligence_agent: If Condition1 acts as a sequencing bottleneck by wrapping a large downstream execution branch. Its observed durations range from 700s to 769s, accounting for the majority of total pipeline runtime in every successful run. Given that it encapsulates downstream notebook activities (Gold, Generate_Derived_Metrics, Apply_Data_Quality_Rules, Load_Curated_Layer, Post_Load_Validation_Report), its long runtime is primarily inherited from sequential child execution rather than being an independent bottleneck itself. The 6.7% deviation contribution reflects amplification of child activity delays.",
+                    "runtime_intelligence_agent: The most recent pipeline run (a9c0c8ee) was cancelled after 88.6 seconds, with Bronze cancelled mid-execution. This cancellation is a direct contributor to the pipeline health rating of 'Severe' and the -91.86% pipeline deviation, as the run completed less than 8% of its normal runtime. The cancellation cause is not captured in available telemetry (no error_message), and whether this was user-initiated or system-triggered cannot be determined from the data.",
+                    "runtime_intelligence_agent: Copy Raw to Bronze exhibits moderate copy throughput deviation (-21.62%, -17.42s) with runtime varying from 60s to 102s across runs. While not a dominant contributor (5.5% of pipeline deviation), the variance is consistent with variable source data volume or network throughput fluctuations rather than a structural pipeline problem. All runs succeeded.",
+                    "runtime_intelligence_agent: Switch1 and Data Cleaning show positive deviation (running slower than baseline by +11.25% and +11.66% respectively), each contributing 4.1% to total pipeline deviation. Their durations are relatively stable across runs (96-129s for Data Cleaning, 99-129s for Switch1), suggesting a modest but consistent increase in processing time versus historical baseline rather than sporadic spikes. These are secondary contributors."
+                ],
+                "supporting_findings": [
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent",
+                    "runtime_intelligence_agent"
+                ],
+                "confidence": 1.0
+            },
+            {
+                "category": "configuration",
+                "description": "Bronze notebook session config requests Medium-tier resources (28g driver/executor memory, 4 cores each, 2 executors) but the pipeline activity definition hard-codes executor_size='Small' and driver_size='Small', creating a mismatch. The Small node size in Synapse provides only 4g memory and 2 vCores per node, meaning the session config's memory/core requests cannot be honoured, likely forcing a fallback or causing severe resource contention/queuing that explains the -90.99% deviation.",
+                "causal_chain": [
+                    "configuration_agent: Bronze notebook session config requests Medium-tier resources (28g driver/executor memory, 4 cores each, 2 executors) but the pipeline activity definition hard-codes executor_size='Small' and driver_size='Small', creating a mismatch. The Small node size in Synapse provides only 4g memory and 2 vCores per node, meaning the session config's memory/core requests cannot be honoured, likely forcing a fallback or causing severe resource contention/queuing that explains the -90.99% deviation.",
+                    "configuration_agent: Gold and Data Cleaning notebook activities share the same executor_size='Small' / driver_size='Small' activity-level setting vs. their session configs requesting 28g memory and 4 cores per node (2 executors). The same size-vs-session-config mismatch present on Bronze also affects these notebooks, likely contributing to resource pressure on 'synsparkpool' and slower-than-baseline execution.",
+                    "configuration_agent: All SynapseNotebook activities in the pipeline (Bronze, ForEach Notebook, Data Cleaning, Switch1 Default) share the single pool 'synsparkpool' with no autoscale or num_executors configuration specified at the activity level (num_executors=null, configuration_type=null). Simultaneous or back-to-back Spark sessions from the ForEach (sequential=true) and Switch on the same pool can exhaust pool capacity, causing queuing that cascades into the large negative deviations seen on Bronze (-90.99%) and GM_Check_File (-85.95%), the latter being downstream of a saturated pipeline.",
+                    "configuration_agent: GM_Check_File (GetMetadata) uses AzureBlobStorageReadSettings (Blob storage) while 'Copy Raw to Bronze' reads from and writes to AzureBlobFSReadSettings/AzureBlobFSWriteSettings (ADLS Gen2). If the file written by the Copy activity lands in ADLS Gen2 but GM_Check_File checks a different Blob Storage endpoint (different dataset 'Dataset' vs. 'adls_source'/'copy_sink'), the check may consistently point at a wrong location, causing retries/waits or unexpected path resolution delay contributing to the -85.95% deviation.",
+                    "configuration_agent: All activities pipeline-wide have retry=0 with no fallback. For SynapseNotebook activities running on a shared, potentially saturated Spark pool, a single transient cluster startup failure (cold pool) causes immediate activity failure with no retry, which can manifest as anomalously short (failed-fast) durations explaining some of the large negative percentage deviations rather than slow runs.",
+                    "configuration_agent: Copy Raw to Bronze has no explicit parallelism settings: parallel_copies=null and data_integration_units=null. Without explicit DIU or parallel copy configuration, ADF/Synapse auto-selects conservative defaults. This, combined with the sink writing text with quote_all_text=true and a .txt extension (potentially larger output), may contribute to the -21.62% deviation. Evidence is partial as linked service throughput settings and actual data volumes are absent."
+                ],
+                "supporting_findings": [
+                    "configuration_agent",
+                    "configuration_agent",
+                    "configuration_agent",
+                    "configuration_agent",
+                    "configuration_agent",
+                    "configuration_agent"
+                ],
+                "confidence": 1.0
+            },
+            {
+                "category": "sql",
+                "description": "inferSchema on CSV triggers full dataset scan twice, causing severe Bronze slowdown and extra job stage.",
+                "causal_chain": [
+                    "sql_intelligence_agent: inferSchema on CSV triggers full dataset scan twice, causing severe Bronze slowdown and extra job stage.",
+                    "sql_intelligence_agent: Gold reads entire parquet directory with no partition filter, causing full column scan on unbounded dataset."
+                ],
+                "supporting_findings": [
+                    "sql_intelligence_agent",
+                    "sql_intelligence_agent"
+                ],
+                "confidence": 1.0
+            },
+            {
+                "category": "unknown",
+                "description": "Bronze notebook triggers df.count() after display(df.limit(10)), causing full CSV scan twice with inferSchema adding a third pass.",
+                "causal_chain": [
+                    "spark_intelligence_agent: Bronze notebook triggers df.count() after display(df.limit(10)), causing full CSV scan twice with inferSchema adding a third pass.",
+                    "spark_intelligence_agent: Data Cleaning dropDuplicates() triggers shuffle with default 200 shuffle partitions on only 2 executors (8 cores total), wasting partition slots.",
+                    "python_intelligence_agent: No severe Python anti-patterns detected in any notebook; code uses native Spark functions throughout with no collect(), toPandas(), or Python UDFs."
+                ],
+                "supporting_findings": [
+                    "spark_intelligence_agent",
+                    "spark_intelligence_agent",
+                    "python_intelligence_agent"
+                ],
+                "confidence": 1.0
+            },
+            {
+                "category": "dependency",
+                "description": "Bronze notebook is the dominant upstream bottleneck on the main critical path, showing severe performance degradation (-90.99% deviation). Its duration swings wildly across runs (16s cancelled, 111s, 126s, 340s, 293s), directly delaying If Condition1, ForEach1, Switch1, and all downstream activities. In the two slowest runs (bc686a21: 1556s, 73624619: 1442s), Bronze alone consumed 340s and 293s respectively—2-3x its best healthy duration—accounting for a large fraction of total run-time variance.",
+                "causal_chain": [
+                    "dependency_lineage_agent: Bronze notebook is the dominant upstream bottleneck on the main critical path, showing severe performance degradation (-90.99% deviation). Its duration swings wildly across runs (16s cancelled, 111s, 126s, 340s, 293s), directly delaying If Condition1, ForEach1, Switch1, and all downstream activities. In the two slowest runs (bc686a21: 1556s, 73624619: 1442s), Bronze alone consumed 340s and 293s respectively—2-3x its best healthy duration—accounting for a large fraction of total run-time variance.",
+                    "dependency_lineage_agent: If Condition1 consistently accounts for 700-769 seconds across all successful runs, making it the single largest time consumer in the pipeline. This is because it executes a sequential chain of up to 6 nested notebooks (Gold → Generate_Derived_Metrics → Apply_Data_Quality_Rules → Load_Curated_Layer → Post_Load_Validation_Report in the false branch, or Silver → Validate → Cleanse → Transform → Enrich → Aggregate in the true branch). The false branch is consistently taken (Amount default=4500 < 5000 threshold) and its chain totals ~545-750s. If Condition1's duration is the primary driver of overall pipeline runtime.",
+                    "dependency_lineage_agent: GM_Check_File (GetMetadata) exhibits severe and highly variable latency (-85.95% deviation). In two runs it took 85-94 seconds instead of the ~7-8 second baseline seen in healthier runs. This points to intermittent Azure Blob Storage metadata lookup delays or throttling. Although GM_Check_File sits near the tail of the pipeline (after Switch1 and Wait for 10 sec), its spikes directly added 75-85 seconds to overall pipeline duration in runs 73624619 and bc686a21.",
+                    "dependency_lineage_agent: Copy Raw to Bronze shows a Warning-level deviation (-21.62%) with moderate duration variability across runs (60-102 seconds). As the root node of the entire pipeline critical path, any increase in its duration propagates to every downstream activity including Bronze, If Condition1, ForEach1, and Switch1. Run 73624619 had Copy=102s (highest) and also had Bronze=293s, compounding the upstream delay accumulation.",
+                    "dependency_lineage_agent: The primary critical path for this pipeline is fully sequential with no parallelism: Copy Raw to Bronze → Bronze → If Condition1 (false branch: Gold → Generate_Derived_Metrics → Apply_Data_Quality_Rules → Load_Curated_Layer → Post_Load_Validation_Report) → ForEach1 (sequential, ForEach Notebook) → Switch1 (Data Cleaning) → Wait for 10 sec → GM_Check_File → IF_File_Exists → Set_File_Found. The total critical path in healthy runs is ~1174-1183s. ForEach1 is configured as sequential (is_sequential=true) with no batch concurrency, meaning notebook iterations cannot parallelize — even though only one notebook is in the default parameter array.",
+                    "dependency_lineage_agent: Gold notebook and Switch1 (containing Data Cleaning) both show Warning-level deviations (-17.1% and +11.25% respectively). Gold's variability (112-182s across runs) propagates into the If Condition1 total duration since it sits at the head of the false-branch sequential chain. Switch1's +11.25% positive deviation (running longer than baseline) in Data Cleaning (NB02_Data_Cleansing on synsparkpool Small executor) suggests the Spark pool may experience cold-start or resource contention when Switch1 executes after ForEach1 also used synsparkpool.",
+                    "dependency_lineage_agent: Set_File_Found and IF_File_Exists show Warning-level deviations (-23.91% and -14.21% respectively) despite individually tiny absolute durations (sub-2s). The deviation signal for Set_File_Found is driven by the anomalous run bc686a21 where GM_Check_File took 94s, as IF_File_Exists and Set_File_Found cannot start until GM_Check_File completes. The deviations in these tail activities are therefore inherited symptoms of GM_Check_File's latency spikes rather than independent issues."
+                ],
+                "supporting_findings": [
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent",
+                    "dependency_lineage_agent"
+                ],
+                "confidence": 1.0
+            }
+        ],
+        "trigger_payload": {
+            "subscription_id": "2cc4fb79-4f6a-4eeb-9fe2-c51dc1165e0e",
+            "service": "synapse",
+            "resource_group": "Synapsetofabric",
+            "workspace_name": "synapsetofabricws1",
+            "item_type": "pipelines",
+            "item_name": "Data_Pipeline_-_Engineering",
+            "total_runs_available": 15,
+            "baseline_window": 5,
+            "pipeline_baseline": {
+                "service": "synapse",
+                "resource_group": "Synapsetofabric",
+                "workspace_name": "synapsetofabricws1",
+                "item_type": "pipelines",
+                "item_name": "Data_Pipeline_-_Engineering",
+                "total_runs_available": 15,
+                "baseline_window": 5,
+                "avg_duration_seconds": 1088.86,
+                "median_duration_seconds": 1183.1,
+                "p95_duration_seconds": 1533.51,
+                "min_duration_seconds": 88.58,
+                "max_duration_seconds": 1556.32,
+                "success_rate_pct": 80.0,
+                "latest_run_duration_seconds": 88.58,
+                "deviation_seconds": -1000.28,
+                "deviation_pct": -91.86,
+                "health": "Severe",
+                "calculated_at": "2026-07-02T10:42:23.218737"
+            },
+            "activities": [
+                {
+                    "activity_name": "Apply_Data_Quality_Rules",
+                    "activity_type": "SynapseNotebook",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 148.29,
+                    "median_duration_seconds": 138.99,
+                    "p95_duration_seconds": 181.08,
+                    "min_duration_seconds": 126.97,
+                    "max_duration_seconds": 188.19,
+                    "latest_duration_seconds": 140.75,
+                    "deviation_seconds": -7.54,
+                    "deviation_pct": -5.08,
+                    "success_rate_pct": 100.0,
+                    "health": "Healthy"
+                },
+                {
+                    "activity_name": "Bronze",
+                    "activity_type": "SynapseNotebook",
+                    "total_runs_available": 5,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 177.58,
+                    "median_duration_seconds": 126.16,
+                    "p95_duration_seconds": 331.08,
+                    "min_duration_seconds": 16.0,
+                    "max_duration_seconds": 340.53,
+                    "latest_duration_seconds": 16.0,
+                    "deviation_seconds": -161.58,
+                    "deviation_pct": -90.99,
+                    "success_rate_pct": 80.0,
+                    "health": "Severe"
+                },
+                {
+                    "activity_name": "Copy Raw to Bronze",
+                    "activity_type": "Copy",
+                    "total_runs_available": 5,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 80.57,
+                    "median_duration_seconds": 81.93,
+                    "p95_duration_seconds": 100.68,
+                    "min_duration_seconds": 60.62,
+                    "max_duration_seconds": 102.07,
+                    "latest_duration_seconds": 63.15,
+                    "deviation_seconds": -17.42,
+                    "deviation_pct": -21.62,
+                    "success_rate_pct": 100.0,
+                    "health": "Warning"
+                },
+                {
+                    "activity_name": "Data Cleaning",
+                    "activity_type": "SynapseNotebook",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 112.71,
+                    "median_duration_seconds": 114.41,
+                    "p95_duration_seconds": 124.67,
+                    "min_duration_seconds": 96.17,
+                    "max_duration_seconds": 125.85,
+                    "latest_duration_seconds": 125.85,
+                    "deviation_seconds": 13.14,
+                    "deviation_pct": 11.66,
+                    "success_rate_pct": 100.0,
+                    "health": "Warning"
+                },
+                {
+                    "activity_name": "ForEach Notebook",
+                    "activity_type": "SynapseNotebook",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 115.25,
+                    "median_duration_seconds": 111.4,
+                    "p95_duration_seconds": 124.96,
+                    "min_duration_seconds": 110.89,
+                    "max_duration_seconds": 127.31,
+                    "latest_duration_seconds": 111.16,
+                    "deviation_seconds": -4.09,
+                    "deviation_pct": -3.55,
+                    "success_rate_pct": 100.0,
+                    "health": "Healthy"
+                },
+                {
+                    "activity_name": "ForEach1",
+                    "activity_type": "ForEach",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 119.14,
+                    "median_duration_seconds": 115.69,
+                    "p95_duration_seconds": 128.65,
+                    "min_duration_seconds": 114.46,
+                    "max_duration_seconds": 130.72,
+                    "latest_duration_seconds": 114.46,
+                    "deviation_seconds": -4.68,
+                    "deviation_pct": -3.93,
+                    "success_rate_pct": 100.0,
+                    "health": "Healthy"
+                },
+                {
+                    "activity_name": "GM_Check_File",
+                    "activity_type": "GetMetadata",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 48.82,
+                    "median_duration_seconds": 47.09,
+                    "p95_duration_seconds": 92.98,
+                    "min_duration_seconds": 6.86,
+                    "max_duration_seconds": 94.25,
+                    "latest_duration_seconds": 6.86,
+                    "deviation_seconds": -41.96,
+                    "deviation_pct": -85.95,
+                    "success_rate_pct": 100.0,
+                    "health": "Severe"
+                },
+                {
+                    "activity_name": "Generate_Derived_Metrics",
+                    "activity_type": "SynapseNotebook",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 151.65,
+                    "median_duration_seconds": 149.4,
+                    "p95_duration_seconds": 168.45,
+                    "min_duration_seconds": 136.25,
+                    "max_duration_seconds": 171.55,
+                    "latest_duration_seconds": 150.89,
+                    "deviation_seconds": -0.76,
+                    "deviation_pct": -0.5,
+                    "success_rate_pct": 100.0,
+                    "health": "Healthy"
+                },
+                {
+                    "activity_name": "Gold",
+                    "activity_type": "SynapseNotebook",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 135.17,
+                    "median_duration_seconds": 123.06,
+                    "p95_duration_seconds": 174.04,
+                    "min_duration_seconds": 112.05,
+                    "max_duration_seconds": 182.53,
+                    "latest_duration_seconds": 112.05,
+                    "deviation_seconds": -23.12,
+                    "deviation_pct": -17.1,
+                    "success_rate_pct": 100.0,
+                    "health": "Warning"
+                },
+                {
+                    "activity_name": "IF_File_Exists",
+                    "activity_type": "IfCondition",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 1.97,
+                    "median_duration_seconds": 1.95,
+                    "p95_duration_seconds": 2.25,
+                    "min_duration_seconds": 1.69,
+                    "max_duration_seconds": 2.29,
+                    "latest_duration_seconds": 1.69,
+                    "deviation_seconds": -0.28,
+                    "deviation_pct": -14.21,
+                    "success_rate_pct": 100.0,
+                    "health": "Warning"
+                },
+                {
+                    "activity_name": "If Condition1",
+                    "activity_type": "IfCondition",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 721.57,
+                    "median_duration_seconds": 708.41,
+                    "p95_duration_seconds": 760.99,
+                    "min_duration_seconds": 700.17,
+                    "max_duration_seconds": 769.28,
+                    "latest_duration_seconds": 700.17,
+                    "deviation_seconds": -21.4,
+                    "deviation_pct": -2.97,
+                    "success_rate_pct": 100.0,
+                    "health": "Healthy"
+                },
+                {
+                    "activity_name": "Load_Curated_Layer",
+                    "activity_type": "SynapseNotebook",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 139.12,
+                    "median_duration_seconds": 142.21,
+                    "p95_duration_seconds": 143.39,
+                    "min_duration_seconds": 128.62,
+                    "max_duration_seconds": 143.45,
+                    "latest_duration_seconds": 141.35,
+                    "deviation_seconds": 2.23,
+                    "deviation_pct": 1.6,
+                    "success_rate_pct": 100.0,
+                    "health": "Healthy"
+                },
+                {
+                    "activity_name": "Post_Load_Validation_Report",
+                    "activity_type": "SynapseNotebook",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 134.81,
+                    "median_duration_seconds": 135.34,
+                    "p95_duration_seconds": 141.84,
+                    "min_duration_seconds": 126.71,
+                    "max_duration_seconds": 141.87,
+                    "latest_duration_seconds": 141.87,
+                    "deviation_seconds": 7.06,
+                    "deviation_pct": 5.24,
+                    "success_rate_pct": 100.0,
+                    "health": "Healthy"
+                },
+                {
+                    "activity_name": "Set_File_Found",
+                    "activity_type": "SetVariable",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 0.46,
+                    "median_duration_seconds": 0.47,
+                    "p95_duration_seconds": 0.53,
+                    "min_duration_seconds": 0.35,
+                    "max_duration_seconds": 0.54,
+                    "latest_duration_seconds": 0.35,
+                    "deviation_seconds": -0.11,
+                    "deviation_pct": -23.91,
+                    "success_rate_pct": 100.0,
+                    "health": "Warning"
+                },
+                {
+                    "activity_name": "Switch1",
+                    "activity_type": "Switch",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 115.83,
+                    "median_duration_seconds": 117.68,
+                    "p95_duration_seconds": 127.79,
+                    "min_duration_seconds": 99.08,
+                    "max_duration_seconds": 128.86,
+                    "latest_duration_seconds": 128.86,
+                    "deviation_seconds": 13.03,
+                    "deviation_pct": 11.25,
+                    "success_rate_pct": 100.0,
+                    "health": "Warning"
+                },
+                {
+                    "activity_name": "Wait for 10 sec",
+                    "activity_type": "Wait",
+                    "total_runs_available": 4,
+                    "baseline_window": 5,
+                    "avg_duration_seconds": 10.8,
+                    "median_duration_seconds": 10.83,
+                    "p95_duration_seconds": 10.98,
+                    "min_duration_seconds": 10.56,
+                    "max_duration_seconds": 10.99,
+                    "latest_duration_seconds": 10.88,
+                    "deviation_seconds": 0.08,
+                    "deviation_pct": 0.74,
+                    "success_rate_pct": 100.0,
+                    "health": "Healthy"
+                }
+            ],
+            "calculated_at": "2026-07-02T10:42:23.218817"
+        }
+    }
+} 
