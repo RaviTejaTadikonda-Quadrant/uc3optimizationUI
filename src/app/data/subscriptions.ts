@@ -30,6 +30,8 @@ function tagServices(services: Service[], sub: Subscription): Service[] {
 function mergeServicesByType(services: Service[]): Service[] {
   const merged = new Map<string, Service>();
   for (const svc of services) {
+    if (!svc) continue; // defensive — should never happen now, but cheap insurance
+
     const existing = merged.get(svc.name);
     if (existing) {
       existing.resourceGroups = [...existing.resourceGroups, ...svc.resourceGroups];
@@ -45,30 +47,31 @@ function mergeServicesByType(services: Service[]): Service[] {
   return Array.from(merged.values());
 }
 
-async function fetchBaseline(subscriptionId: string, accessToken: string): Promise<RawBaselineResponse> {
-  const res = await fetch(`${BASELINE_API_BASE}/${subscriptionId}`, {
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-  });
+async function fetchBaseline(subscriptionId: string): Promise<RawBaselineResponse> {
+  const res = await fetch(`${BASELINE_API_BASE}/${subscriptionId}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch workload baseline (${res.status})`);
   }
   return res.json();
 }
 
+export async function fetchWorkloadData(sub: Subscription): Promise<Service[]> {
+  const raw = await fetchBaseline(sub.id);
+  return tagServices(transformBaselineResponse(raw), sub);
+}
+
 // Fetches every subscription's baseline data and merges same-named services
 // (Synapse/Databricks/ADF) into one row each, aggregating resources from
 // every subscription underneath it — same behavior as the old mock version.
-export async function fetchAllWorkloadData(
-  subscriptions: Subscription[],
-  accessToken: string,
-): Promise<Service[]> {
+export async function fetchAllWorkloadData(subscriptions: Subscription[]): Promise<Service[]> {
   const perSub = await Promise.all(
-    subscriptions.map(async (sub) => {
+    subscriptions.map(async (sub): Promise<Service[]> => {
       try {
-        const raw = await fetchBaseline(sub.id, accessToken);
+        const raw = await fetchBaseline(sub.id);
         return tagServices(transformBaselineResponse(raw), sub);
-      } catch {
-        return [] as Service[]; // one bad subscription shouldn't kill the whole dashboard
+      } catch (err) {
+        console.error("Failed to fetch/transform baseline for subscription", sub.id, err);
+        return []; // one bad subscription shouldn't kill the whole dashboard
       }
     }),
   );

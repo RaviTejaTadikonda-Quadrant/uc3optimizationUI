@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Cloud, Loader2, Lock, Mail, ShieldCheck, TrendingDown, Sparkles } from "lucide-react";
+import { Cloud, Loader2, Lock, Mail, ShieldCheck, GitBranch, Wallet, Bot } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 
 export default function LandingPage() {
@@ -51,25 +51,36 @@ export default function LandingPage() {
           <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center ring-1 ring-white/20">
             <Cloud className="w-6 h-6 text-white" />
           </div>
-          <span className="text-lg font-extrabold tracking-tight">Azure Cost Optimization</span>
+          <span className="text-lg font-extrabold tracking-tight">Azure Workload Intelligence</span>
         </div>
 
         <div className="relative space-y-6 max-w-md">
           <h1 className="text-4xl font-black leading-tight tracking-tight">
-            Cut cloud spend with AI-driven workload insights.
+            Root-cause slow pipelines and rising cloud spend — automatically.
           </h1>
           <p className="text-white/80 text-base leading-relaxed">
-            Drill down across subscriptions, services and runs. Get per-run
-            recommendations with before/after code and realise savings faster.
+            Drill down from subscription to a single pipeline run. Specialized agents investigate
+            runtime regressions and cost anomalies separately, then hand you a working code patch or
+            a prioritized fix plan — not just another dashboard.
           </p>
           <ul className="space-y-3 text-sm">
             {[
-              { icon: TrendingDown, t: "Live baseline & anomaly detection per workload" },
-              { icon: Sparkles, t: "AI agent fixes with quantified monthly savings" },
+              {
+                icon: GitBranch,
+                t: "Runtime agent finds the exact line and ships a before/after code patch",
+              },
+              {
+                icon: Wallet,
+                t: "Cost agent traces spend spikes to root cause with a ranked action roadmap",
+              },
+              {
+                icon: Bot,
+                t: "10+ specialist agents — code, config, dependency, impact — feed one verdict",
+              },
               { icon: ShieldCheck, t: "Enterprise SSO with Microsoft Azure AD" },
             ].map((f) => (
               <li key={f.t} className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center ring-1 ring-white/20">
+                <span className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center ring-1 ring-white/20 flex-shrink-0">
                   <f.icon className="w-4 h-4" />
                 </span>
                 <span className="text-white/90 font-medium">{f.t}</span>
@@ -79,7 +90,7 @@ export default function LandingPage() {
         </div>
 
         <div className="relative text-xs text-white/50">
-          © {new Date().getFullYear()} Azure Cost Optimization · Enterprise Platform
+          © {new Date().getFullYear()} Azure Workload Intelligence · Enterprise Platform
         </div>
       </div>
 
@@ -91,12 +102,16 @@ export default function LandingPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center">
               <Cloud className="w-5 h-5 text-white" />
             </div>
-            <span className="text-base font-extrabold text-slate-900 tracking-tight">Azure Cost Optimization</span>
+            <span className="text-base font-extrabold text-slate-900 tracking-tight">
+              Azure Workload Intelligence
+            </span>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 p-8">
             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Sign in</h2>
-            <p className="text-sm text-slate-500 mt-1">Welcome back. Access your optimization dashboard.</p>
+            <p className="text-sm text-slate-500 mt-1">
+              Welcome back. Access your optimization dashboard.
+            </p>
 
             {/* Azure SSO */}
             <button
@@ -119,7 +134,9 @@ export default function LandingPage() {
 
             <div className="flex items-center gap-3 my-6">
               <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">or</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                or
+              </span>
               <div className="h-px flex-1 bg-slate-200" />
             </div>
 

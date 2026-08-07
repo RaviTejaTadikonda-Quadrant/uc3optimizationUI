@@ -1,4 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import type { CostConsumptionDetail, CostPanelViewModel } from "../data/costApi";
+import type { CostInvestigationResult } from "../data/costApi";
+import { postCostInvestigation } from "../data/costApi";
+import { normalizeFreshCostResult, type CachedCostInvestigationResponse } from "../data/costApi";
 import {
   ChevronRight,
   ChevronDown,
@@ -35,6 +39,9 @@ import {
   HelpCircle,
   LogOut,
   FolderTree,
+  Gauge,
+  Wallet,
+  FileText,
 } from "lucide-react";
 
 // ─── Interfaces & Typings ────────────────────────────────────────────────────
@@ -148,12 +155,15 @@ export interface PipelineTelemetryStep {
 
 export interface TargetOptimizationForecast {
   summary: string;
+  detailed_summary?: string;
   items: Array<Record<string, any> | string>;
 }
+
 export interface AgentRecommendationAnalysis {
   core_bottleneck: Record<string, any> | string | null;
   recommendations: Array<Record<string, any> | string>;
   target_optimization_forecast: TargetOptimizationForecast;
+  compilation_adjustment: Record<string, any> | string | null;
 }
 
 export interface PipelineBaseline {
@@ -213,6 +223,9 @@ export interface AnalysisHeader {
   total_input_tokens: number;
   total_output_tokens: number;
   estimated_monthly_cost: number | null;
+  current_month_cost?: number | null;
+  baseline_monthly_cost?: number | null;
+  currency?: string;
 }
 
 export interface AnalysisResult {
@@ -245,6 +258,21 @@ export interface AnalyzeApiResponse {
   analysis: AnalysisResult;
 }
 
+function toTitleCase(str: string | null | undefined): string {
+  if (!str) return "";
+  return str
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2") // camelCase → spaces
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function fmtAgentName(name: string): string {
+  return name.replace(/_/g, " ");
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 // Decimal-aware duration formatter, driven directly off the API's *_seconds
 // fields (no rounding to whole seconds/minutes).
@@ -266,7 +294,7 @@ function statusLabel(s: string): string {
 // Deviation percentage straight from the API's deviation_pct, kept to 2 decimals.
 function fmtDeviation(dev: number | null | undefined): string {
   if (dev === null || dev === undefined) return "";
-  return `${Math.abs(dev).toFixed(2)}%`;
+  return `${dev >= 0 ? "+" : ""}${dev.toFixed(2)}%`;
 }
 
 // Maps the API's own health string to a badge color bucket, reusing StatusDot's palette.
@@ -392,6 +420,15 @@ function ApiHealthBadge({ health }: { health: ApiHealth }) {
   );
 }
 
+function extractExecutiveSummary(text: string | null | undefined): string {
+  if (!text) return "";
+  const cutMarker = "Root cause";
+  const idx = text.indexOf(cutMarker);
+  let section = idx === -1 ? text : text.slice(0, idx);
+  section = section.replace(/^Executive summary\s*\n+/i, "");
+  return section.trim();
+}
+
 function TypePill({ label }: { label: string }) {
   return (
     <span
@@ -459,6 +496,10 @@ function AgentAnalysisPanel({
   resourceGroup,
   workspace,
   subscriptionId,
+  costLookup,
+  cacheEntry,
+  onCacheUpdate,
+  investigationId,
 }: {
   wl: Workload;
   isApplied: boolean;
@@ -467,15 +508,33 @@ function AgentAnalysisPanel({
   resourceGroup: ResourceGroup;
   workspace: Workspace;
   subscriptionId: string;
+  investigationId?: string;
+  costLookup?: Map<string, CostConsumptionDetail>;
+  cacheEntry?: {
+    agentState: "idle" | "running" | "done";
+    aiResult: AnalysisResult | null;
+    pollUrl: string | null;
+    apiError: string | null;
+  };
+  onCacheUpdate: (
+    entry: Partial<{
+      agentState: "idle" | "running" | "done";
+      aiResult: AnalysisResult | null;
+      pollUrl: string | null;
+      apiError: string | null;
+    }>,
+  ) => void;
 }) {
-  const [agentState, setAgentState] = useState<"idle" | "running" | "done">("idle");
-  const [aiResult, setAiResult] = useState<AnalysisResult | null>(null);
-  const [pollUrl, setPollUrl] = useState<string | null>(null);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [agentState, setAgentState] = useState(cacheEntry?.agentState ?? "idle");
+  const [aiResult, setAiResult] = useState(cacheEntry?.aiResult ?? null);
+  const [pollUrl, setPollUrl] = useState(cacheEntry?.pollUrl ?? null);
+  const [apiError, setApiError] = useState(cacheEntry?.apiError ?? null);
   const [pollAttempts, setPollAttempts] = useState(0);
-  const [pollStatus, setPollStatus] = useState<{ status: string; current_step: string } | null>(
-    null,
-  );
+  const [pollStatus, setPollStatus] = useState<{
+    status: string;
+    current_step: string;
+    active_agents?: string[];
+  } | null>(null);
   const [openSecs, setOpenSecs] = useState({
     faults: true,
     code: true,
@@ -495,6 +554,10 @@ function AgentAnalysisPanel({
     };
     return mapping[serviceId] || serviceId;
   };
+  const costEntry =
+    costLookup?.get(
+      `${subscriptionId}::${getServiceKey(service.id)}::${resourceGroup.name}::${workspace.name}`,
+    ) ?? null;
 
   // Convert workload type to lowercase item type
   const getItemType = (wtype: string): string => {
@@ -506,43 +569,85 @@ function AgentAnalysisPanel({
     return mapping[wtype] || wtype.toLowerCase();
   };
 
-  // Call analyze API when component mounts (View Fix clicked)
-  useEffect(() => {
-    const callAnalyzeApi = async () => {
-      try {
-        const serviceKey = getServiceKey(service.id);
-        const itemType = getItemType(wl.wtype);
-        const analyzeUrl = `${apiBaseUrl}/api/subscriptions/${subscriptionId}/services/${serviceKey}/rg/${resourceGroup.name}/ws/${workspace.name}/items/${itemType}/${wl.name}/analyze`;
+  async function startFreshAnalysis() {
+    try {
+      const serviceKey = getServiceKey(service.id);
+      const itemType = getItemType(wl.wtype);
+      const analyzeUrl = `${apiBaseUrl}/api/subscriptions/${subscriptionId}/services/${serviceKey}/rg/${resourceGroup.name}/ws/${workspace.name}/items/${itemType}/${wl.name}/analyze`;
 
-        const analyzeResponse = await fetch(analyzeUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
+      const analyzeResponse = await fetch(analyzeUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
 
-        if (!analyzeResponse.ok) {
-          console.error("Analyze API failed:", analyzeResponse.status, analyzeResponse.statusText);
-          setApiError("Failed to initialize analysis");
-          return;
-        }
-
-        const analyzeData = await analyzeResponse.json();
-
-        if (analyzeData.poll_url) {
-          setPollUrl(analyzeData.poll_url);
-          setApiError(null);
-        } else {
-          console.error("No poll_url in response");
-          setApiError("Invalid response from server");
-        }
-      } catch (error) {
-        console.error("Error calling analyze API:", error);
-        setApiError("Error initializing analysis");
+      if (!analyzeResponse.ok) {
+        console.error("Analyze API failed:", analyzeResponse.status, analyzeResponse.statusText);
+        setApiError("Failed to initialize analysis");
+        return;
       }
-    };
 
-    callAnalyzeApi();
+      const analyzeData = await analyzeResponse.json();
+
+      if (analyzeData.poll_url) {
+        setPollUrl(analyzeData.poll_url);
+        onCacheUpdate({ pollUrl: analyzeData.poll_url });
+        setApiError(null);
+      } else {
+        console.error("No poll_url in response");
+        setApiError("Invalid response from server");
+      }
+    } catch (error) {
+      console.error("Error calling analyze API:", error);
+      setApiError("Error initializing analysis");
+    }
+  }
+
+  async function loadCachedAnalysis(id: string) {
+    setAgentState("running");
+    setApiError(null);
+    try {
+      const serviceKey = getServiceKey(service.id);
+      const res = await fetch(
+        `${apiBaseUrl}/api/subscriptions/${subscriptionId}/services/${serviceKey}/investigations/${id}`,
+        { headers: { accept: "application/json" } },
+      );
+      if (!res.ok) throw new Error(`Failed to load cached analysis (${res.status})`);
+      const data: AnalyzeApiResponse = await res.json();
+      if (!data?.analysis) throw new Error("Cached analysis was empty");
+      setAiResult(data.analysis);
+      setAgentState("done");
+      onCacheUpdate({ aiResult: data.analysis, agentState: "done" });
+    } catch (err) {
+      console.error("Cached analysis fetch failed, falling back to a fresh run:", err);
+      setAgentState("idle");
+      void startFreshAnalysis();
+    }
+  }
+
+  useEffect(() => {
+    if (cacheEntry?.agentState === "done" || cacheEntry?.agentState === "running") return;
+    if (investigationId) {
+      void loadCachedAnalysis(investigationId);
+    } else {
+      void startFreshAnalysis();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subscriptionId, service.id, resourceGroup.name, workspace.name, wl.wtype, wl.name]);
+  }, [
+    subscriptionId,
+    service.id,
+    resourceGroup.name,
+    workspace.name,
+    wl.wtype,
+    wl.name,
+    investigationId,
+  ]);
+
+  useEffect(() => {
+    if (pollUrl && agentState === "idle") {
+      runAgent();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pollUrl]);
 
   function toggleSec(k: keyof typeof openSecs) {
     setOpenSecs((s) => ({ ...s, [k]: !s[k] }));
@@ -569,6 +674,15 @@ function AgentAnalysisPanel({
     }
   }
 
+  async function handleRerun() {
+    setPollUrl(null);
+    setAgentState("idle");
+    setAiResult(null);
+    setApiError(null);
+    onCacheUpdate({ pollUrl: null, agentState: "idle", aiResult: null, apiError: null });
+    await startFreshAnalysis();
+  }
+
   async function runAgent() {
     if (agentState === "running" || !pollUrl) return;
     setAgentState("running");
@@ -586,21 +700,29 @@ function AgentAnalysisPanel({
         return;
       }
       let pollData = await pollResponse.json();
-      setPollStatus({ status: pollData.status, current_step: pollData.current_step });
+      setPollStatus({
+        status: pollData.status,
+        current_step: pollData.current_step,
+        active_agents: pollData.active_agents,
+      });
 
       // Poll until analysis is complete
       let attempts = 0;
-      const maxAttempts = 48;
+      const maxAttempts = 250;
       while (
         pollData.status !== "completed" &&
         pollData.status !== "failed" &&
         attempts < maxAttempts
       ) {
-        await sleep(5000);
+        await sleep(1000);
         pollResponse = await fetch(`${apiBaseUrl}${pollUrl}`);
         if (pollResponse.ok) {
           pollData = await pollResponse.json();
-          setPollStatus({ status: pollData.status, current_step: pollData.current_step });
+          setPollStatus({
+            status: pollData.status,
+            current_step: pollData.current_step,
+            active_agents: pollData.active_agents,
+          });
         }
         attempts++;
         setPollAttempts(attempts);
@@ -647,6 +769,7 @@ function AgentAnalysisPanel({
 
       setAiResult(analysisData.analysis);
       setAgentState("done");
+      onCacheUpdate({ aiResult: analysisData.analysis, agentState: "done" });
     } catch (error) {
       console.error("Error in runAgent:", error);
       setApiError("Error running analysis");
@@ -688,34 +811,15 @@ function AgentAnalysisPanel({
         </div>
 
         <div className="flex items-center gap-3 self-end sm:self-auto">
-          <button
-            onClick={runAgent}
-            disabled={agentState === "running" || !pollUrl}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white text-xs font-bold rounded-lg transition-all shadow-sm"
-            title={!pollUrl ? "Initializing analysis..." : undefined}
-          >
-            {!pollUrl ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Initializing...
-              </>
-            ) : agentState === "running" ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Investigating...
-              </>
-            ) : agentState === "done" ? (
-              <>
-                <RefreshCw className="w-3.5 h-3.5" />
-                Rerun Analysis
-              </>
-            ) : (
-              <>
-                <Play className="w-3.5 h-3.5 fill-current" />
-                Analyze Workload
-              </>
-            )}
-          </button>
+          {agentState === "done" && (
+            <button
+              onClick={handleRerun}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-all shadow-sm"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Rerun Analysis
+            </button>
+          )}
         </div>
       </div>
 
@@ -745,10 +849,15 @@ function AgentAnalysisPanel({
           {
             label: "Estimated Monthly Cost",
             value:
-              hdr?.estimated_monthly_cost !== null && hdr?.estimated_monthly_cost !== undefined
-                ? `$${hdr.estimated_monthly_cost}/mo`
-                : "Not available",
-            valueClass: "text-slate-800 font-bold",
+              agentState !== "done"
+                ? "Calculating…"
+                : hdr?.estimated_monthly_cost !== null && hdr?.estimated_monthly_cost !== undefined
+                  ? `${hdr.estimated_monthly_cost.toFixed(2)} ${hdr.currency ?? ""}/mo`.trim()
+                  : "Not available",
+            valueClass:
+              agentState !== "done"
+                ? "text-slate-400 italic animate-pulse"
+                : "text-slate-800 font-bold",
             icon: <DollarSign className="w-3.5 h-3.5 text-emerald-500" />,
           },
         ].map(({ label, value, valueClass, icon }) => (
@@ -812,8 +921,7 @@ function AgentAnalysisPanel({
         </div>
       )}
 
-    
-     {/* Running state */}
+      {/* Running state */}
       {agentState === "running" && (
         <div className="flex flex-col items-center justify-center py-16 gap-3 bg-white">
           <div className="relative">
@@ -822,12 +930,17 @@ function AgentAnalysisPanel({
           </div>
           <p className="text-xs font-semibold text-slate-700">
             {pollStatus?.current_step
-              ? pollStatus.current_step.replace(/_/g, " ")
+              ? toTitleCase(pollStatus.current_step)
               : "Preparing analysis..."}
           </p>
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
             Status: {pollStatus?.status ?? "Running"}
           </span>
+          {pollStatus?.active_agents && pollStatus.active_agents.length > 0 && (
+            <span className="text-[11px] font-medium text-slate-500 text-center max-w-md">
+              {pollStatus.active_agents.map(toTitleCase).join(", ")}
+            </span>
+          )}
         </div>
       )}
 
@@ -845,7 +958,7 @@ function AgentAnalysisPanel({
                   <div key={t.sequence} className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     <span className="text-xs font-semibold text-slate-800">
-                      {t.step.replace(/_/g, " ")}
+                      {toTitleCase(t.step)}
                     </span>
                     {i < telemetry.length - 1 && (
                       <span className="text-slate-300 hidden md:inline">/</span>
@@ -885,13 +998,6 @@ function AgentAnalysisPanel({
                       <p className="text-xs text-rose-950 font-medium leading-relaxed">
                         {rec.core_bottleneck.description}
                       </p>
-                      {/* {Array.isArray(rec.core_bottleneck.causal_chain) && (
-                        <ul className="text-[11px] text-rose-800 list-disc list-inside space-y-0.5">
-                          {rec.core_bottleneck.causal_chain.map((step: string, i: number) => (
-                            <li key={i}>{step}</li>
-                          ))}
-                        </ul>
-                      )} */}
                     </div>
                   )
                 ) : (
@@ -927,67 +1033,27 @@ function AgentAnalysisPanel({
 
               <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 flex items-center gap-1.5 mb-1.5">
-                  <BadgeCheck className="w-3.5 h-3.5" /> Target Optimization Forecast
+                  <BadgeCheck className="w-3.5 h-3.5" /> Compilation Adjustment
                 </span>
-                <p className="text-xs text-emerald-950 font-medium leading-relaxed">
-                  {rec?.target_optimization_forecast?.summary || "No recommendations to assess."}
-                </p>
-                {/* {rec?.target_optimization_forecast?.items?.length ? (
-                  <ul className="text-xs text-emerald-950 mt-2 space-y-1 list-disc list-inside">
-                    {rec.target_optimization_forecast.items.map((itRaw, i) => {
-                      const it = safeParseMaybeJSON(itRaw);
-                      return (
-                        <li key={i}>
-                          {typeof it === "string"
-                            ? it
-                            : `${it.title}${it.estimated_performance_gain_pct != null ? ` (~${it.estimated_performance_gain_pct}% gain, ${it.implementation_effort} effort)` : ""}`}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : null} */}
+                {rec?.compilation_adjustment ? (
+                  typeof rec.compilation_adjustment === "string" ? (
+                    <p className="text-xs text-emerald-950 font-medium leading-relaxed">
+                      {rec.compilation_adjustment}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-emerald-950 font-medium leading-relaxed">
+                      {rec.compilation_adjustment.description ||
+                        rec.compilation_adjustment.summary ||
+                        JSON.stringify(rec.compilation_adjustment)}
+                    </p>
+                  )
+                ) : (
+                  <p className="text-xs text-emerald-950 font-medium leading-relaxed">
+                    No compilation adjustments were required for this run.
+                  </p>
+                )}
               </div>
             </div>
-
-            {/* {rootCauses.length > 0 && (
-              <div className="mt-4 bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-600 flex items-center gap-1.5 mb-1.5">
-                  <HelpCircle className="w-3.5 h-3.5" /> Root Causes
-                </span>
-                <ul className="text-xs text-slate-700 font-medium leading-relaxed space-y-1 list-disc list-inside">
-                  {rootCauses.map((rcRaw, i) => {
-                    const rc = safeParseMaybeJSON(rcRaw);
-                    if (typeof rc === "string") return <li key={i}>{rc}</li>;
-                    return (
-                      <li key={i} className="list-none -ml-4 mb-3 last:mb-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          {rc.category && (
-                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
-                              {rc.category}
-                            </span>
-                          )}
-                          {rc.confidence != null && (
-                            <span className="text-[9px] font-bold text-slate-400">
-                              {Math.round(rc.confidence * 100)}% confidence
-                            </span>
-                          )}
-                        </div>
-                        {rc.description && (
-                          <p className="text-xs text-slate-700 mb-1">{rc.description}</p>
-                        )}
-                        {Array.isArray(rc.causal_chain) && (
-                          <ul className="list-disc list-inside text-[11px] text-slate-500 space-y-0.5">
-                            {rc.causal_chain.map((step: string, j: number) => (
-                              <li key={j}>{step}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )} */}
           </div>
 
           {/* Section 2: Structural Faults */}
@@ -1075,66 +1141,17 @@ function AgentAnalysisPanel({
                       item.target ||
                       item.file_name ||
                       `Change ${i + 1}`;
-                    // const suggestedFixes: string[] = Array.isArray(item.suggested_fixes)
-                    //   ? item.suggested_fixes
-                    //   : [];
 
                     return (
                       <div key={i} className="border border-slate-200 rounded-xl p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-bold text-slate-900">{label}</span>
-                          {/* {item.language && (
-                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
-                              {item.language}
-                            </span>
-                          )} */}
                         </div>
 
-                        {/* {item.description && (
-                          <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-                            {item.description}
-                          </p>
-                        )} */}
-
-                        {/* {suggestedFixes.length > 0 && (
-                          <ul className="text-xs text-slate-600 space-y-2 mb-3">
-                            {suggestedFixes.map((fRaw, j) => {
-                              const f = safeParseMaybeJSON(fRaw);
-                              if (typeof f === "string") {
-                                return (
-                                  <li key={j} className="list-disc list-inside">
-                                    {f}
-                                  </li>
-                                );
-                              }
-                              return (
-                                <li
-                                  key={j}
-                                  className="list-none border border-slate-100 rounded-lg p-2.5 bg-slate-50/50"
-                                >
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className="font-semibold text-slate-800">
-                                      {f.fix_title}
-                                    </span>
-                                    {f.confidence != null && (
-                                      <span className="text-[10px] font-bold text-slate-400 flex-shrink-0">
-                                        {Math.round(f.confidence * 100)}% confidence
-                                      </span>
-                                    )}
-                                  </div>
-                                  {f.fix_description && (
-                                    <p className="text-slate-500 mt-1 leading-relaxed">
-                                      {f.fix_description}
-                                    </p>
-                                  )}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )} */}
-
                         {beforeCode || afterCode ? (
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div
+                            className={`grid grid-cols-1 gap-3 ${afterCode ? "lg:grid-cols-2" : ""}`}
+                          >
                             {/* Before */}
                             <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-slate-950">
                               <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800">
@@ -1165,13 +1182,13 @@ function AgentAnalysisPanel({
                               )}
                             </div>
 
-                            {/* After */}
-                            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-slate-950">
-                              <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800">
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400">
-                                  AUTO-GENERATED PATCH (COMPILE SUCCESS)
-                                </span>
-                                {afterCode && (
+                            {/* After — only rendered when the backend actually returned a patch */}
+                            {afterCode && (
+                              <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm bg-slate-950">
+                                <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800">
+                                  <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400">
+                                    AUTO-GENERATED PATCH (COMPILE SUCCESS)
+                                  </span>
                                   <button
                                     onClick={() => copyText(afterCode, `after-${i}`)}
                                     className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-all"
@@ -1182,20 +1199,12 @@ function AgentAnalysisPanel({
                                       <Copy className="w-3.5 h-3.5" />
                                     )}
                                   </button>
-                                )}
-                              </div>
-                              {afterCode ? (
+                                </div>
                                 <pre className="p-4 overflow-x-auto text-[11px] font-mono text-slate-200 leading-relaxed max-h-[380px] overflow-y-auto whitespace-pre">
                                   {afterCode}
                                 </pre>
-                              ) : (
-                                <p className="p-4 text-xs text-slate-500 font-medium">
-                                  {item.patch_available === false
-                                    ? "No patch was generated for this change."
-                                    : "Patch not available."}
-                                </p>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <p className="text-xs text-slate-400 font-medium">
@@ -1294,6 +1303,294 @@ function AgentAnalysisPanel({
     </div>
   );
 }
+function WorkspaceCostPanel({
+  entry,
+  workspace,
+  resourceGroup,
+  service,
+  isApplied,
+  onApply,
+  cacheEntry,
+  onCacheUpdate,
+  investigationId,
+}: {
+  entry: CostConsumptionDetail;
+  workspace: Workspace;
+  resourceGroup: ResourceGroup;
+  service: Service;
+  isApplied: boolean;
+  onApply: () => void;
+  cacheEntry?: CostCacheEntry;
+  onCacheUpdate: (entry: Partial<CostCacheEntry>) => void;
+  investigationId?: string;
+}) {
+  const [state, setState] = useState<"loading" | "done" | "error">(cacheEntry?.state ?? "loading");
+  const [result, setResult] = useState<CostPanelViewModel | null>(cacheEntry?.result ?? null);
+  const [error, setError] = useState<string | null>(cacheEntry?.error ?? null);
+  const [openSecs, setOpenSecs] = useState({ recs: true });
+
+  const agentsBaseUrl = "https://uc3-agents-bgbsfqbbgkfeabfq.eastus-01.azurewebsites.net";
+
+  function toggleSec(k: keyof typeof openSecs) {
+    setOpenSecs((s) => ({ ...s, [k]: !s[k] }));
+  }
+
+  // Fresh run → POST returns the flat CostInvestigationResult shape.
+  async function runFreshInvestigation() {
+    setState("loading");
+    onCacheUpdate({ state: "loading", result: null, error: null });
+    try {
+      const raw = await postCostInvestigation(entry);
+      const vm = normalizeFreshCostResult(raw);
+      setResult(vm);
+      setState("done");
+      onCacheUpdate({ result: vm, state: "done", error: null });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Cost investigation failed";
+      setError(msg);
+      setState("error");
+      onCacheUpdate({ error: msg, state: "error", result: null });
+    }
+  }
+
+  // "View Fix" on an already-investigated workspace → GET now returns the
+  // SAME flat CostInvestigationResult shape as the fresh POST, wrapped in
+  // `analysis`. So it goes through the same normalizer as the fresh run.
+  async function loadCachedCostAnalysis(id: string) {
+    setState("loading");
+    onCacheUpdate({ state: "loading", result: null, error: null });
+    try {
+      const subId = workspace.subscriptionId || resourceGroup.subscriptionId || "";
+      const serviceKey = serviceCostKey(service.id);
+      const res = await fetch(
+        `${agentsBaseUrl}/api/subscriptions/${subId}/services/${serviceKey}/cost-investigations/${id}`,
+        { headers: { accept: "application/json" } },
+      );
+      if (!res.ok) throw new Error(`Failed to load cached cost analysis (${res.status})`);
+      const data: CachedCostInvestigationResponse = await res.json();
+      if (!data?.analysis) throw new Error("Cached cost analysis was empty");
+      const vm = normalizeFreshCostResult(data.analysis);
+      setResult(vm);
+      setState("done");
+      onCacheUpdate({ result: vm, state: "done", error: null });
+    } catch (err) {
+      console.error("Cached cost analysis fetch failed, falling back to a fresh run:", err);
+      void runFreshInvestigation();
+    }
+  }
+
+  async function handleRerun() {
+    setResult(null);
+    setError(null);
+    await runFreshInvestigation();
+  }
+
+  useEffect(() => {
+    if (cacheEntry?.state === "done" || cacheEntry?.state === "loading") return;
+    if (investigationId) {
+      void loadCachedCostAnalysis(investigationId);
+    } else {
+      void runFreshInvestigation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    entry.subscription_id,
+    entry.service,
+    entry.resource_group,
+    entry.workspace_name,
+    investigationId,
+  ]);
+
+  const currency = result?.currency ?? entry.currency ?? "INR";
+  const recommendations = result?.recommendations ?? [];
+  const rootCauses = result?.root_causes ?? [];
+
+  return (
+    <div className="bg-slate-50/50 border-t border-slate-200">
+      <div className="flex items-center justify-between gap-4 px-6 py-4 bg-white border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center shadow-md shadow-emerald-100 flex-shrink-0">
+            <Wallet className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-950 uppercase tracking-wider">
+              Cost Investigation Agent
+            </span>
+            <p className="text-xs text-slate-500 font-medium">
+              {service.name} · {resourceGroup.name} · {workspace.name}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {state === "done" && (
+            <button
+              onClick={handleRerun}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition-all shadow-sm"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Rerun Analysis
+            </button>
+          )}
+          <button
+            onClick={onApply}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
+              isApplied
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm"
+            }`}
+          >
+            <BadgeCheck className="w-4 h-4 text-emerald-500" />
+            {isApplied ? "Target Resolved" : "Flag as Manually Applied"}
+          </button>
+        </div>
+      </div>
+
+      {state === "loading" && (
+        <div className="flex flex-col items-center justify-center py-12 gap-3 bg-white">
+          <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+          <p className="text-xs font-semibold text-slate-700">Running cost investigation…</p>
+        </div>
+      )}
+
+      {state === "error" && (
+        <div className="flex flex-col items-center justify-center py-12 px-6 bg-white">
+          <AlertTriangle className="w-5 h-5 text-rose-500 mb-2" />
+          <p className="text-xs font-semibold text-rose-800">{error}</p>
+        </div>
+      )}
+
+      {state === "done" && result && (
+        <div className="divide-y divide-slate-200 bg-white">
+          {/* Root Causes */}
+          {rootCauses.length > 0 && (
+            <div className="p-6 bg-slate-50/30">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-rose-600 flex items-center gap-1.5 mb-2">
+                <AlertTriangle className="w-3.5 h-3.5" /> Root Causes
+              </span>
+              <div className="space-y-2">
+                {rootCauses.map((rc, i) => (
+                  <div key={i} className="bg-white rounded-lg p-3 border border-slate-200">
+                    <p className="text-xs text-slate-700 leading-relaxed">{rc.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations — from action_roadmap (fresh) or suggested_fixes
+              (fallback), both normalized into the same shape */}
+          <div className="p-6">
+            <button
+              onClick={() => toggleSec("recs")}
+              className="w-full flex items-center justify-between font-bold text-xs uppercase tracking-wider text-slate-800 mb-3"
+            >
+              <span className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-indigo-500" /> Recommended Steps to Fix (
+                {recommendations.length})
+              </span>
+              {openSecs.recs ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </button>
+
+            {openSecs.recs &&
+              (recommendations.length > 0 ? (
+                <div className="space-y-3">
+                  {recommendations.map((item, i) => (
+                    <div key={i} className="border border-slate-200 rounded-xl p-4">
+                      <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                        <span className="text-xs font-bold text-slate-900">{item.title}</span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {item.estimated_gain_pct !== undefined && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">
+                              ~{item.estimated_gain_pct}% gain
+                            </span>
+                          )}
+                          {item.effort && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                              {item.effort} effort
+                            </span>
+                          )}
+                          {item.risk && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">
+                              {item.risk} risk
+                            </span>
+                          )}
+                          {item.confidence !== undefined && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-500">
+                              {Math.round(item.confidence * 100)}% confidence
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {item.target_activity && (
+                        <p className="text-[10px] text-slate-400 font-semibold mb-2">
+                          Target: {item.target_activity}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 font-medium">
+                  No recommendations were generated for this workspace.
+                </p>
+              ))}
+          </div>
+          {result.executive_summary && (
+            <div className="p-6">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1.5 mb-2">
+                <FileText className="w-3.5 h-3.5" /> Investigation Findings
+              </span>
+              <div className="bg-gradient-to-br from-indigo-50/60 to-emerald-50/40 border border-indigo-100 rounded-xl p-4 max-h-72 overflow-y-auto">
+                <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-wrap font-medium">
+                  {result.executive_summary}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* KPI grid */}
+          <div className="p-6 bg-slate-50/20 grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              {
+                label: "Current Month Cost",
+                value: fmtCurrency(result.current_month_cost, currency),
+              },
+              {
+                label: "Estimated Monthly Cost",
+                value: fmtCurrency(result.estimated_monthly_cost, currency),
+              },
+              {
+                label: "Forecast Deviation",
+                value:
+                  result.forecast_deviation_pct !== null
+                    ? `${result.forecast_deviation_pct! >= 0 ? "+" : ""}${result.forecast_deviation_pct!.toFixed(2)}% (${fmtCurrency(result.forecast_deviation, currency)})`
+                    : "—",
+              },
+              {
+                label: "Forecast Status",
+                value: result.forecast_status
+                  ? (COST_STATUS_LABEL[result.forecast_status] ?? result.forecast_status)
+                  : "—",
+              },
+            ].map((m) => (
+              <div key={m.label} className="bg-white rounded-lg p-3 border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">
+                  {m.label}
+                </span>
+                <span className="text-xs font-extrabold text-slate-800 break-all">{m.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── AI Recommendation Panel ─────────────────────────────────────────────────
 function AIRecommendationPanel({
@@ -1304,6 +1601,10 @@ function AIRecommendationPanel({
   resourceGroup,
   workspace,
   subscriptionId,
+  costLookup,
+  cacheEntry,
+  onCacheUpdate,
+  investigationId,
 }: {
   wl: Workload;
   isApplied: boolean;
@@ -1312,6 +1613,10 @@ function AIRecommendationPanel({
   resourceGroup: ResourceGroup;
   workspace: Workspace;
   subscriptionId: string;
+  costLookup?: Map<string, CostConsumptionDetail>;
+  cacheEntry?: AgentCacheEntry;
+  onCacheUpdate: (entry: Partial<AgentCacheEntry>) => void;
+  investigationId?: string;
 }) {
   const baseVal = fmtSeconds(wl.avgSeconds);
   const lastVal = fmtSeconds(wl.lastSeconds);
@@ -1369,10 +1674,66 @@ function AIRecommendationPanel({
             resourceGroup={resourceGroup}
             workspace={workspace}
             subscriptionId={subscriptionId}
+            costLookup={costLookup}
+            cacheEntry={cacheEntry}
+            onCacheUpdate={onCacheUpdate}
+            investigationId={investigationId}
           />
         </div>
       </td>
     </tr>
+  );
+}
+
+const SERVICE_ID_TO_COST_KEY: Record<string, string> = {
+  syn: "synapse",
+  dbr: "databricks",
+  adf: "adf",
+};
+function serviceCostKey(serviceId: string): string {
+  return SERVICE_ID_TO_COST_KEY[serviceId] || serviceId;
+}
+
+function fmtCurrency(amount: number | null | undefined, currency = "INR"): string {
+  if (amount === null || amount === undefined || Number.isNaN(amount)) return "—";
+  return `${amount.toFixed(2)} ${currency}`;
+}
+
+const COST_STATUS_LABEL: Record<string, string> = {
+  above_baseline: "Above Baseline",
+  below_baseline: "Below Baseline",
+  at_baseline: "At Baseline",
+};
+const COST_STATUS_RANK: Record<string, number> = {
+  above_baseline: 0,
+  at_baseline: 1,
+  below_baseline: 2,
+};
+
+function isUnhealthyState(h: ApiHealth | null | undefined): boolean {
+  return h === "Warning" || h === "Critical" || h === "Severe";
+}
+
+function CostStatusBadge({ status }: { status: string }) {
+  const cls =
+    status === "above_baseline"
+      ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200"
+      : status === "below_baseline"
+        ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+        : "bg-slate-100 text-slate-600 ring-1 ring-slate-200";
+  const dot =
+    status === "above_baseline"
+      ? "bg-rose-500"
+      : status === "below_baseline"
+        ? "bg-emerald-500"
+        : "bg-slate-400";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${cls}`}
+    >
+      <span className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
+      {COST_STATUS_LABEL[status] ?? status}
+    </span>
   );
 }
 
@@ -1388,14 +1749,23 @@ export interface WorkloadOptimizationProps {
   user: { name: string; email: string; initials: string };
   onLogout: () => void;
   loading?: boolean;
+  costLookup?: Map<string, CostConsumptionDetail>;
+  runtimeInvestigationLookup?: Map<string, string>;
+  costInvestigationLookup?: Map<string, string>;
 }
 
 type SortKey = "none" | "last" | "health" | "deviation";
 type SortDir = "asc" | "desc";
+type DeviationMode = "runtime" | "cost";
 
 // The four summary tiles, each pulling from a distinct dimension of the data
 // so they never restate one another: health, reliability, scope, and volume.
-type TileKey = "needsattention" | "highdeviation" | "services" | "totalruns";
+type TileKey = "healthy" | "highdeviation" | "services" | "totalruns";
+
+// NOTE: getCostEntry / workspaceCostMatches previously lived here at module
+// scope, but they need `costLookup`, `search`, and `filterDev` — all of
+// which are component state/props. They are now defined INSIDE
+// WorkloadOptimization, right after `toggle`. See below.
 
 export default function WorkloadOptimization({
   data,
@@ -1403,8 +1773,16 @@ export default function WorkloadOptimization({
   user,
   onLogout,
   loading = false,
+  costLookup,
+  runtimeInvestigationLookup,
+  costInvestigationLookup,
 }: WorkloadOptimizationProps) {
-  const DATA = data;
+  const SERVICE_DISPLAY_ORDER: Record<string, number> = { syn: 0, dbr: 1, adf: 2 };
+  const DATA = [...data].sort(
+    (a, b) =>
+      (SERVICE_DISPLAY_ORDER[a.id] ?? Number.MAX_SAFE_INTEGER) -
+      (SERVICE_DISPLAY_ORDER[b.id] ?? Number.MAX_SAFE_INTEGER),
+  );
   const [openSvc, setOpenSvc] = useState<Set<string>>(new Set(DATA.map((s) => s.id)));
   const [openRG, setOpenRG] = useState<Set<string>>(new Set());
   const [openWs, setOpenWs] = useState<Set<string>>(new Set());
@@ -1414,23 +1792,102 @@ export default function WorkloadOptimization({
   const [search, setSearch] = useState("");
   const [filterSvc, setFilterSvc] = useState("");
   const [filterSub, setFilterSub] = useState("all");
-  // Health filter now uses the raw API vocabulary: "all" | "Healthy" | "Warning" | "Critical" | "Severe"
-  const [filterHealth, setFilterHealth] = useState<string>("all");
   const [filterDev, setFilterDev] = useState<"all" | "high" | "mod" | "low">("all");
+  const [topScope, setTopScope] = useState<"top5" | "all">("top5");
   const [sortKey, setSortKey] = useState<SortKey>("none");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "applied" | "cost">("all");
   const [tileFilter, setTileFilter] = useState<null | TileKey>(null);
-
+  const [deviationMode, setDeviationMode] = useState<DeviationMode>("runtime");
+  const [openCostAI, setOpenCostAI] = useState<Set<string>>(new Set());
+  const [appliedCost, setAppliedCost] = useState<Set<string>>(new Set());
+  const seenSvcIdsRef = useRef<Set<string>>(new Set(DATA.map((s) => s.id)));
   // Keep open-service set in sync when the dataset changes.
   useEffect(() => {
-    setOpenSvc(new Set(DATA.map((s) => s.id)));
+    const newIds = DATA.map((s) => s.id).filter((id) => !seenSvcIdsRef.current.has(id));
+    if (newIds.length > 0) {
+      setOpenSvc((prev) => {
+        const next = new Set(prev);
+        newIds.forEach((id) => next.add(id));
+        return next;
+      });
+      newIds.forEach((id) => seenSvcIdsRef.current.add(id));
+    }
   }, [DATA]);
+
+  type AgentCacheEntry = {
+    agentState: "idle" | "running" | "done";
+    aiResult: AnalysisResult | null;
+    pollUrl: string | null;
+    apiError: string | null;
+  };
+  const [analysisCache, setAnalysisCache] = useState<Map<string, AgentCacheEntry>>(new Map());
+
+  function updateAnalysisCache(id: string, entry: Partial<AgentCacheEntry>) {
+    setAnalysisCache((prev) => {
+      const next = new Map(prev);
+      next.set(id, {
+        ...(next.get(id) ?? { agentState: "idle", aiResult: null, pollUrl: null, apiError: null }),
+        ...entry,
+      });
+      return next;
+    });
+  }
+
+  type CostCacheEntry = {
+    state: "loading" | "done" | "error";
+    result: CostPanelViewModel | null;
+    error: string | null;
+  };
+  const [costAnalysisCache, setCostAnalysisCache] = useState<Map<string, CostCacheEntry>>(
+    new Map(),
+  );
+
+  function updateCostAnalysisCache(id: string, entry: Partial<CostCacheEntry>) {
+    setCostAnalysisCache((prev) => {
+      const next = new Map(prev);
+      next.set(id, {
+        ...(next.get(id) ?? { state: "loading", result: null, error: null }),
+        ...entry,
+      });
+      return next;
+    });
+  }
 
   function toggle(set: Set<string>, id: string, setter: (s: Set<string>) => void) {
     const n = new Set(set);
     n.has(id) ? n.delete(id) : n.add(id);
     setter(n);
+  }
+
+  // ── Cost-mode helpers ──────────────────────────────────────────────────
+  // These live INSIDE the component (unlike the earlier draft) because they
+  // depend on `costLookup`, `search`, and `filterDev`, which only exist here.
+  function getCostEntry(
+    svc: Service,
+    rg: ResourceGroup,
+    ws: Workspace,
+  ): CostConsumptionDetail | null {
+    if (!costLookup) return null;
+    const subId = ws.subscriptionId || rg.subscriptionId || "";
+    const key = `${subId}::${serviceCostKey(svc.id)}::${rg.name}::${ws.name}`;
+    return costLookup.get(key) ?? null;
+  }
+
+  function workspaceCostMatches(svc: Service, rg: ResourceGroup, ws: Workspace): boolean {
+    const q = search.toLowerCase();
+    if (q && !ws.name.toLowerCase().includes(q)) return false;
+    const entry = getCostEntry(svc, rg, ws);
+    if (!entry) return false;
+    if (filterDev !== "all") {
+      const a = Math.abs(entry.deviation.deviation_pct);
+      if (filterDev === "high" && !(a > 70)) return false;
+      if (filterDev === "mod" && !(a > 30 && a <= 70)) return false;
+      if (filterDev === "low" && !(a <= 30)) return false;
+    }
+    if (tileFilter === "healthy" && entry.deviation.status === "above_baseline") return false;
+    if (tileFilter === "highdeviation" && entry.deviation.status !== "above_baseline") return false;
+    return true;
   }
 
   function expandAll() {
@@ -1458,74 +1915,107 @@ export default function WorkloadOptimization({
     setOpenWs(new Set());
     setOpenWl(new Set());
     setOpenAI(new Set());
+    setOpenCostAI(new Set());
   }
 
   const appliedCount = applied.size;
 
-  // ── Summary-tile metrics, scoped to the selected subscription ─────────────
+  // Cost mode vs runtime mode — computed once per render, used by the KPI
+  // tiles below AND the DATA.forEach render loop further down.
+  const isCost = deviationMode === "cost";
+
   const scopedWorkloads = DATA.flatMap((s) => s.resourceGroups)
     .filter((rg) => filterSub === "all" || rg.subscriptionId === filterSub)
     .flatMap((rg) => rg.workspaces)
     .flatMap((ws) => ws.workloads);
 
-  // Tile 1 — Health dimension: workloads the API itself flags as not healthy.
-  const needsAttentionCount = scopedWorkloads.filter(
-    (w) => w.apiHealth === "Warning" || w.apiHealth === "Critical" || w.apiHealth === "Severe",
-  ).length;
+  const scopedCostEntries: CostConsumptionDetail[] = [];
+  DATA.forEach((svc) => {
+    svc.resourceGroups
+      .filter((rg) => filterSub === "all" || rg.subscriptionId === filterSub)
+      .forEach((rg) => {
+        rg.workspaces.forEach((ws) => {
+          const entry = getCostEntry(svc, rg, ws);
+          if (entry) scopedCostEntries.push(entry);
+        });
+      });
+  });
 
-  // Tile 2 — Trend dimension: workloads whose latest run deviates more than
-  // 70% from their own baseline (either direction), matching the same
-  // threshold used by the "High" bucket in the Deviation dropdown filter.
-  const highDeviationCount = scopedWorkloads.filter((w) => {
-    const dev = w.apiDeviationPct;
-    return dev !== null && dev !== undefined && Math.abs(dev) > 70;
-  }).length;
+  // One unified list of deviation % values — pulled from whichever mode is
+  // active. Runtime uses apiDeviationPct, cost uses deviation.deviation_pct.
+  // Everything below reads from this single list, so the KPIs never care
+  // about health status or cost status — only the deviation number itself.
+  const scopedDeviations: number[] = isCost
+    ? scopedCostEntries.map((e) => e.deviation.deviation_pct)
+    : scopedWorkloads
+        .map((w) => w.apiDeviationPct)
+        .filter((d): d is number => d !== null && d !== undefined);
 
-  // Tile 3 — Scope dimension: how many distinct services (Synapse, Databricks,
-  // ADF, etc.) are represented in the current subscription scope.
+  // Tile 1 — moderate-or-worse deviation (>30%, same threshold as the
+  // "Moderate" bucket in the deviation filter dropdown).
+  const needsAttentionCount = scopedDeviations.filter((d) => Math.abs(d) > 30).length;
+
+  // Tile 2 — high deviation (>70%, same threshold used elsewhere).
+  const highDeviationCount = isCost
+    ? scopedCostEntries.filter((e) => e.deviation.status === "above_baseline").length
+    : scopedWorkloads.filter((w) => isUnhealthyState(w.apiHealth)).length;
+  const healthyCount = isCost
+    ? scopedCostEntries.filter((e) => e.deviation.status !== "above_baseline").length
+    : scopedWorkloads.filter((w) => w.apiHealth === "Healthy").length;
+  // Tile 3 — scope indicator, same for both modes.
   const scopedServicesCount = DATA.filter((s) =>
     s.resourceGroups.some((rg) => filterSub === "all" || rg.subscriptionId === filterSub),
   ).length;
 
-  // Tile 4 — Volume/confidence dimension: total number of tracked activity
-  // runs across scoped workloads, a signal for how much history backs the numbers shown.
-  const totalRunsTracked = scopedWorkloads.reduce((sum, w) => sum + w.runs.length, 0);
+  // Tile 4 — total items with deviation data tracked in this mode.
+  const totalRunsTracked = isCost
+    ? scopedCostEntries.length
+    : scopedWorkloads.reduce((sum, w) => sum + w.runs.length, 0);
 
   const tiles = [
     {
-      key: "needsattention" as const,
-      label: "Needs Attention",
-      value: needsAttentionCount,
+      key: "highdeviation" as const,
+      label: isCost ? "Workspaces with High Deviation" : " High Deviation Workloads",
+      value: highDeviationCount,
       icon: AlertTriangle,
       accent: "rose",
       filterable: true,
+      description: isCost
+        ? "Workspaces whose cost is currently above baseline."
+        : "Workloads currently in Warning, Critical, or Severe health state.",
     },
     {
-      key: "highdeviation" as const,
-      label: "High Deviation",
-      value: highDeviationCount,
-      icon: TrendingUp,
-      accent: "amber",
+      key: "healthy" as const,
+      label: isCost ? "Healthy Workspaces" : "Healthy Worloads",
+      value: healthyCount,
+      icon: CheckCircle2,
+      accent: "emerald",
       filterable: true,
+      description: isCost
+        ? "Workspaces currently at or below their cost baseline."
+        : "Workloads currently reporting a Healthy status.",
     },
     {
       key: "services" as const,
-      label: "Services Monitored",
+      label: " Azure Services Monitored",
       value: scopedServicesCount,
       icon: Layers,
       accent: "indigo",
       filterable: false,
+      description: "Distinct Azure services covered by the current subscription filter.",
     },
     {
       key: "totalruns" as const,
-      label: "Total Runs Tracked",
-      value: totalRunsTracked,
+      label: isCost ? "Workspaces Tracked" : "Workloads Analyzed",
+      value: isCost ? scopedCostEntries.length : scopedWorkloads.length,
       icon: Activity,
       accent: "emerald",
       filterable: false,
+      description: isCost
+        ? "Total workspaces with cost data in the current scope."
+        : "Total workloads with runtime data in the current scope.",
     },
   ];
-
   const rows: React.ReactNode[] = [];
 
   // Does an individual workload pass the search / tab / health / deviation filters?
@@ -1539,9 +2029,6 @@ export default function WorkloadOptimization({
 
     const dev = wl.apiDeviationPct;
 
-    // Health filter now compares directly against the raw API health string.
-    if (filterHealth !== "all" && wl.apiHealth !== filterHealth) return false;
-
     if (filterDev !== "all") {
       const a = dev === null ? null : Math.abs(dev);
       if (a === null) return false;
@@ -1553,12 +2040,8 @@ export default function WorkloadOptimization({
     // Summary-tile quick filters. "services" and "totalruns" are scope/volume
     // tiles, not per-workload predicates, so they don't filter rows (see
     // `filterable: false` above — they're rendered as non-clickable info cards).
-    const isFlagged =
-      wl.apiHealth === "Warning" || wl.apiHealth === "Critical" || wl.apiHealth === "Severe";
-    const isHighDev = dev !== null && Math.abs(dev) > 70;
-
-    if (tileFilter === "needsattention" && !isFlagged) return false;
-    if (tileFilter === "highdeviation" && !isHighDev) return false;
+    if (tileFilter === "healthy" && wl.apiHealth !== "Healthy") return false;
+    if (tileFilter === "highdeviation" && !isUnhealthyState(wl.apiHealth)) return false;
 
     return true;
   }
@@ -1566,11 +2049,7 @@ export default function WorkloadOptimization({
   // True when any filter that operates on workloads is active, so parent rows
   // should only render when they contain a matching workload.
   const filtersWorkloads =
-    search !== "" ||
-    activeTab !== "all" ||
-    filterHealth !== "all" ||
-    filterDev !== "all" ||
-    tileFilter !== null;
+    search !== "" || activeTab !== "all" || filterDev !== "all" || tileFilter !== null;
 
   function sortWorkloads(list: Workload[]): Workload[] {
     const dir = sortDir === "asc" ? 1 : -1;
@@ -1598,6 +2077,26 @@ export default function WorkloadOptimization({
     });
   }
 
+  // Cost mode vs runtime mode — computed once per render, used throughout
+  // the DATA.forEach loop below to branch rendering at the workspace level.
+  // Global Top-5 by |deviation|, respecting the current service/subscription
+  // filters — computed once per render, reused across every service section.
+  const topScopeIds = new Set<string>();
+  if (topScope === "top5") {
+    DATA.filter((svc) => !filterSvc || svc.id === filterSvc).forEach((svc) => {
+      const svcWorkloads = svc.resourceGroups
+        .filter((rg) => filterSub === "all" || rg.subscriptionId === filterSub)
+        .flatMap((rg) => rg.workspaces)
+        .flatMap((ws) => ws.workloads)
+        .filter((w) => isUnhealthyState(w.apiHealth));
+
+      [...svcWorkloads]
+        .sort((a, b) => Math.abs(b.apiDeviationPct ?? 0) - Math.abs(a.apiDeviationPct ?? 0))
+        .slice(0, 5)
+        .forEach((w) => topScopeIds.add(w.id));
+    });
+  }
+
   DATA.forEach((svc) => {
     // Service filter (operates on the merged service level).
     if (filterSvc && svc.id !== filterSvc) return;
@@ -1615,13 +2114,21 @@ export default function WorkloadOptimization({
       (a, rg) => a + rg.workspaces.reduce((b, ws) => b + ws.workloads.length, 0),
       0,
     );
+    const isWlVisible = (wl: Workload) =>
+      workloadMatches(wl) && (topScope === "all" || topScopeIds.has(wl.id));
     const isSvcOpen = openSvc.has(svc.id);
 
-    const hasWlMatch = subResourceGroups.some((rg) =>
-      rg.workspaces.some((ws) => ws.workloads.some((wl) => workloadMatches(wl))),
-    );
+    // ── Branch: cost mode matches at the workspace level, runtime mode at
+    // the workload level ──────────────────────────────────────────────
+    const hasWlMatch = isCost
+      ? subResourceGroups.some((rg) =>
+          rg.workspaces.some((ws) => workspaceCostMatches(svc, rg, ws)),
+        )
+      : subResourceGroups.some((rg) =>
+          rg.workspaces.some((ws) => ws.workloads.some((wl) => isWlVisible(wl))),
+        );
 
-    if (filtersWorkloads && !hasWlMatch) return;
+    if (!hasWlMatch) return;
 
     rows.push(
       <tr
@@ -1629,7 +2136,7 @@ export default function WorkloadOptimization({
         className="bg-slate-50/75 hover:bg-slate-100/60 transition-colors border-b border-slate-200"
       >
         <td
-          className="py-3.5 px-4 font-semibold text-slate-900"
+          className="py-3.5 px-3 font-semibold text-slate-900"
           style={{ borderLeft: `4px solid ${svc.color}` }}
         >
           <div className="flex items-center gap-2">
@@ -1641,36 +2148,16 @@ export default function WorkloadOptimization({
               {getServiceIcon(svc.id)}
             </div>
             <span className="text-xs font-extrabold text-slate-900 tracking-wide">{svc.name}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 font-bold ml-1">
-              {totalWl}
-            </span>
           </div>
         </td>
-        <td className="py-3.5 px-4" />
-        <td className="py-3.5 px-4" />
-        <td className="py-3.5 px-4" />
-        <td className="py-3.5 px-4 text-xs text-slate-400 font-medium" />
-        <td className="py-3.5 px-4 text-xs text-slate-400 font-medium" />
-        <td className="py-3.5 px-4 text-xs text-slate-400 font-medium" />
-        <td className="py-3.5 px-4">
-          <span className="text-[10px] text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded font-extrabold uppercase">
-            Aggregate
-          </span>
-        </td>
-        <td className="py-3.5 px-4 text-xs font-bold text-slate-500">
-          {
-            subResourceGroups
-              .flatMap((rg) => rg.workspaces)
-              .flatMap((ws) => ws.workloads)
-              .filter(
-                (w) =>
-                  w.apiHealth === "Warning" ||
-                  w.apiHealth === "Critical" ||
-                  w.apiHealth === "Severe",
-              ).length
-          }{" "}
-          insights
-        </td>
+        <td className="py-3.5 px-3" />
+        <td className="py-3.5 px-3" />
+
+        <td className="py-3.5 px-3 text-xs text-slate-400 font-medium" />
+        <td className="py-3.5 px-3 text-xs text-slate-400 font-medium" />
+        <td className="py-3.5 px-3 text-xs text-slate-400 font-medium" />
+        <td className="py-3.5 px-3" />
+        <td className="py-3.5 px-3 text-xs font-bold text-slate-500" />
       </tr>,
     );
 
@@ -1679,9 +2166,11 @@ export default function WorkloadOptimization({
     subResourceGroups.forEach((rg) => {
       const isRGOpen = openRG.has(rg.id);
 
-      const hasRGMatch = rg.workspaces.some((ws) => ws.workloads.some((wl) => workloadMatches(wl)));
+      const hasRGMatch = isCost
+        ? rg.workspaces.some((ws) => workspaceCostMatches(svc, rg, ws))
+        : rg.workspaces.some((ws) => ws.workloads.some((wl) => isWlVisible(wl)));
 
-      if (filtersWorkloads && !hasRGMatch) return;
+      if (!hasRGMatch) return;
 
       const rgTotalWl = rg.workspaces.reduce((a, ws) => a + ws.workloads.length, 0);
 
@@ -1692,7 +2181,7 @@ export default function WorkloadOptimization({
           className="bg-slate-100/70 hover:bg-slate-100 transition-colors border-b border-slate-200"
         >
           <td
-            className="py-3 px-4"
+            className="py-3 px-3"
             style={{ borderLeft: `4px solid ${svc.color}30`, paddingLeft: "2.25rem" }}
           >
             <div className="flex items-center gap-2">
@@ -1701,43 +2190,132 @@ export default function WorkloadOptimization({
               <span className="text-xs font-bold text-slate-800 truncate" title={rg.name}>
                 {rg.name}
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 font-bold ml-1">
-                {rgTotalWl}
-              </span>
             </div>
           </td>
           <td
-            className="py-3 px-4 text-xs text-slate-500 font-semibold truncate"
+            className="py-3 px-3 text-xs text-slate-500 font-semibold truncate"
             title={rg.subscriptionName}
           >
             {rg.subscriptionName ?? ""}
           </td>
-          <td className="py-3 px-4">
+          <td className="py-3 px-3">
             <span className="text-[10px] uppercase font-extrabold tracking-wider bg-slate-200/70 text-slate-500 px-2 py-0.5 rounded">
               Resource Group
             </span>
           </td>
-          <td className="py-3 px-4" />
-          <td className="py-3 px-4 text-xs text-slate-400 font-medium" />
-          <td className="py-3 px-4 text-xs text-slate-400 font-medium" />
-          <td className="py-3 px-4 text-xs text-slate-400 font-medium" />
-          <td className="py-3 px-4">
-            <span className="text-[10px] text-slate-400 font-bold uppercase">
-              {rg.workspaces.length} workspace{rg.workspaces.length === 1 ? "" : "s"}
-            </span>
-          </td>
-          <td className="py-3 px-4 text-xs text-slate-400 font-semibold" />
+
+          <td className="py-3 px-3 text-xs text-slate-400 font-medium" />
+          <td className="py-3 px-3 text-xs text-slate-400 font-medium" />
+          <td className="py-3 px-3 text-xs text-slate-400 font-medium" />
+          <td className="py-3 px-3" />
+          <td className="py-3 px-3 text-xs text-slate-400 font-semibold" />
         </tr>,
       );
 
       if (!isRGOpen) return;
 
       rg.workspaces.forEach((ws) => {
+        // ── COST MODE: render a single workspace-level row + panel, then
+        // stop — cost data doesn't drill down into workloads/activities. ──
+        if (isCost) {
+          if (!workspaceCostMatches(svc, rg, ws)) return;
+          const entry = getCostEntry(svc, rg, ws)!;
+          const isWsOpen = openCostAI.has(ws.id);
+          const isWsApplied = appliedCost.has(ws.id);
+
+          rows.push(
+            <tr
+              key={ws.id}
+              className={`hover:bg-slate-50/50 transition-colors border-b border-slate-100 ${
+                isWsOpen ? "bg-slate-50/30" : "bg-white"
+              }`}
+            >
+              <td
+                className="py-3 px-3"
+                style={{ borderLeft: `4px solid ${svc.color}20`, paddingLeft: "3.75rem" }}
+              >
+                <div className="flex items-center gap-2">
+                  <Server className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <span className="text-xs font-bold text-slate-800 truncate" title={ws.name}>
+                    {ws.name}
+                  </span>
+                </div>
+              </td>
+              <td
+                className="py-3 px-3 text-xs text-slate-500 font-semibold truncate"
+                title={ws.subscriptionName}
+              >
+                {ws.subscriptionName ?? ""}
+              </td>
+              <td className="py-3 px-3 overflow-hidden">
+                <TypePill label="Workspace" />
+              </td>
+              <td className="py-3 px-3 text-xs text-slate-800 font-bold">
+                {fmtCurrency(entry.baseline_monthly_cost, entry.currency)}
+              </td>
+              <td className="py-3 px-3 text-xs text-slate-800 font-bold">
+                {fmtCurrency(entry.last_30_days.total_cost, entry.currency)}
+              </td>
+              <td className="py-3 px-3 text-xs font-bold text-slate-700">
+                {`${entry.deviation.deviation_pct >= 0 ? "+" : ""}${entry.deviation.deviation_pct.toFixed(2)}%`}
+              </td>
+              <td className="py-3 px-3">
+                <CostStatusBadge status={entry.deviation.status} />
+              </td>
+              <td className="py-3 px-3">
+                {entry.deviation.status !== "below_baseline" ? (
+                  <button
+                    onClick={() => toggle(openCostAI, ws.id, setOpenCostAI)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                      isWsApplied
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                        : isWsOpen
+                          ? "border-slate-300 bg-slate-900 text-white hover:bg-slate-800 shadow-sm"
+                          : "border-indigo-200 bg-indigo-50 text-indigo-800 hover:bg-indigo-100"
+                    }`}
+                  >
+                    <Bot className="w-3.5 h-3.5" />
+                    {isWsApplied ? "Applied ✓" : isWsOpen ? "Hide Fix" : "View Fix"}
+                  </button>
+                ) : (
+                  <span className="text-xs text-slate-400 font-semibold">No action needed</span>
+                )}
+              </td>
+            </tr>,
+          );
+
+          if (isWsOpen) {
+            rows.push(
+              <tr key={`${ws.id}-cost-ai`}>
+                <td colSpan={9} className="p-0 border-b border-slate-200">
+                  <WorkspaceCostPanel
+                    entry={entry}
+                    workspace={ws}
+                    resourceGroup={rg}
+                    service={svc}
+                    isApplied={isWsApplied}
+                    onApply={() => toggle(appliedCost, ws.id, setAppliedCost)}
+                    cacheEntry={costAnalysisCache.get(ws.id)}
+                    onCacheUpdate={(e) => updateCostAnalysisCache(ws.id, e)}
+                    investigationId={costInvestigationLookup?.get(
+                      `${ws.subscriptionId || rg.subscriptionId || ""}::${serviceCostKey(svc.id)}::${ws.name}`,
+                    )}
+                  />
+                </td>
+              </tr>,
+            );
+          }
+
+          return; // cost mode stops at the workspace — no workload/activity drilldown
+        }
+
+        // ── RUNTIME MODE (unchanged): full Workspace → Workload → Activity
+        // drill-down. ──────────────────────────────────────────────────
         const isWsOpen = openWs.has(ws.id);
 
-        const hasWorkloadAfterFilter = ws.workloads.some((wl) => workloadMatches(wl));
+        const hasWorkloadAfterFilter = ws.workloads.some((wl) => isWlVisible(wl));
 
-        if (filtersWorkloads && !hasWorkloadAfterFilter) return;
+        if (!hasWorkloadAfterFilter) return;
 
         rows.push(
           <tr
@@ -1745,7 +2323,7 @@ export default function WorkloadOptimization({
             className="bg-white hover:bg-slate-50/50 transition-colors border-b border-slate-100"
           >
             <td
-              className="py-3 px-4"
+              className="py-3 px-3"
               style={{ borderLeft: `4px solid ${svc.color}20`, paddingLeft: "3.75rem" }}
             >
               <div className="flex items-center gap-2">
@@ -1757,26 +2335,22 @@ export default function WorkloadOptimization({
               </div>
             </td>
             <td
-              className="py-3 px-4 text-xs text-slate-500 font-semibold truncate"
+              className="py-3 px-3 text-xs text-slate-500 font-semibold truncate"
               title={ws.subscriptionName}
             >
               {ws.subscriptionName ?? ""}
             </td>
-            <td className="py-3 px-4 overflow-hidden">
-              {!/workspace$|data factory/i.test(ws.rtype) && <TypePill label={ws.rtype} />}
+            <td className="py-3 px-3 overflow-hidden">
+              <span className="text-[10px] uppercase font-extrabold tracking-wider bg-slate-200/70 text-slate-500 px-2 py-0.5 rounded">
+                Workspace
+              </span>
             </td>
-            <td className="py-3 px-4 text-xs text-slate-600 font-medium truncate" title={ws.name}>
-              {ws.name}
-            </td>
-            <td className="py-3 px-4 text-xs text-slate-400 font-medium" />
-            <td className="py-3 px-4 text-xs text-slate-400 font-medium" />
-            <td className="py-3 px-4 text-xs text-slate-400 font-medium" />
-            <td className="py-3 px-4">
-              <span className="text-[10px] text-slate-400 font-bold uppercase">Workspace</span>
-            </td>
-            <td className="py-3 px-4 text-xs text-slate-400 font-semibold">
-              {ws.workloads.length} sub-tasks
-            </td>
+
+            <td className="py-3 px-3 text-xs text-slate-400 font-medium" />
+            <td className="py-3 px-3 text-xs text-slate-400 font-medium" />
+            <td className="py-3 px-3 text-xs text-slate-400 font-medium" />
+            <td className="py-3 px-3"></td>
+            <td className="py-3 px-3 text-xs text-slate-400 font-semibold"></td>
           </tr>,
         );
 
@@ -1785,7 +2359,7 @@ export default function WorkloadOptimization({
         const sorted = sortWorkloads(ws.workloads);
 
         sorted.forEach((wl) => {
-          if (!workloadMatches(wl)) return;
+          if (!isWlVisible(wl)) return;
 
           const isWlApplied = applied.has(wl.id);
           const baseDisp = fmtSeconds(wl.avgSeconds);
@@ -1794,13 +2368,7 @@ export default function WorkloadOptimization({
           const isWlOpen = openWl.has(wl.id);
           const isAIOpen = openAI.has(wl.id);
 
-          // A workload needs action if it's unhealthy itself, OR any of its
-          // underlying activities/runs are unhealthy.
-          const isUnhealthy = (h: ApiHealth | null | undefined) =>
-            h === "Warning" || h === "Critical" || h === "Severe";
-
-          const hasRec =
-            isUnhealthy(wl.apiHealth) || wl.runs.some((run) => isUnhealthy(run.health));
+          const hasRec = isUnhealthyState(wl.apiHealth);
 
           rows.push(
             <tr
@@ -1808,7 +2376,7 @@ export default function WorkloadOptimization({
               className={`hover:bg-slate-50/50 transition-colors border-b border-slate-100 ${isAIOpen ? "bg-slate-50/30" : "bg-white"}`}
             >
               <td
-                className="py-3 px-4"
+                className="py-3 px-3"
                 style={{ borderLeft: `4px solid ${svc.color}15`, paddingLeft: "5.25rem" }}
               >
                 <div className="flex items-center gap-2">
@@ -1820,29 +2388,24 @@ export default function WorkloadOptimization({
                 </div>
               </td>
               <td
-                className="py-3 px-4 text-xs text-slate-500 font-semibold truncate"
+                className="py-3 px-3 text-xs text-slate-500 font-semibold truncate"
                 title={ws.subscriptionName}
               >
                 {ws.subscriptionName ?? ""}
               </td>
-              <td className="py-3 px-4 overflow-hidden">
+              <td className="py-3 px-3 overflow-hidden">
                 <TypePill label={wl.wtype} />
               </td>
-              <td
-                className="py-3 px-4 text-xs text-slate-400 max-w-[150px] truncate"
-                title={ws.name}
-              >
-                {ws.name}
-              </td>
-              <td className="py-3 px-4 text-xs text-slate-800 font-bold">{baseDisp}</td>
-              <td className="py-3 px-4 text-xs text-slate-800 font-bold">{lastDisp}</td>
-              <td className="py-3 px-4 text-xs font-bold text-slate-700">
+
+              <td className="py-3 px-3 text-xs text-slate-800 font-bold">{baseDisp}</td>
+              <td className="py-3 px-3 text-xs text-slate-800 font-bold">{lastDisp}</td>
+              <td className="py-3 px-3 text-xs font-bold text-slate-700">
                 {fmtDeviation(wl.apiDeviationPct)}
               </td>
-              <td className="py-3 px-4">
+              <td className="py-3 px-3">
                 {wl.apiHealth && <ApiHealthBadge health={wl.apiHealth} />}
               </td>
-              <td className="py-3 px-4">
+              <td className="py-3 px-3">
                 {hasRec ? (
                   <div className="flex items-center gap-2">
                     <button
@@ -1871,12 +2434,18 @@ export default function WorkloadOptimization({
               <AIRecommendationPanel
                 key={`${wl.id}-ai`}
                 wl={wl}
+                cacheEntry={analysisCache.get(wl.id)}
+                onCacheUpdate={(entry) => updateAnalysisCache(wl.id, entry)}
                 isApplied={isWlApplied}
                 onApply={() => toggle(applied, wl.id, setApplied)}
                 service={svc}
                 resourceGroup={rg}
                 workspace={ws}
                 subscriptionId={ws.subscriptionId || ""}
+                costLookup={costLookup}
+                investigationId={runtimeInvestigationLookup?.get(
+                  `${ws.subscriptionId || ""}::${serviceCostKey(svc.id)}::${wl.name}`,
+                )}
               />,
             );
           }
@@ -1893,7 +2462,7 @@ export default function WorkloadOptimization({
                 className="bg-slate-50/40 hover:bg-slate-100/30 transition-colors border-b border-slate-100/50"
               >
                 <td
-                  className="py-2.5 px-4"
+                  className="py-2.5 px-3"
                   style={{ borderLeft: "4px solid transparent", paddingLeft: "6.75rem" }}
                 >
                   <div className="flex items-center gap-2">
@@ -1917,34 +2486,32 @@ export default function WorkloadOptimization({
                   </div>
                 </td>
                 <td
-                  className="py-2.5 px-4 text-xs text-slate-500 font-semibold truncate"
+                  className="py-2.5 px-3 text-xs text-slate-500 font-semibold truncate"
                   title={ws.subscriptionName}
                 >
                   {ws.subscriptionName ?? ""}
                 </td>
-                <td className="py-2.5 px-4 overflow-hidden">
+                <td className="py-2.5 px-3 overflow-hidden">
                   <TypePill label={run.activityType} />
                 </td>
-                <td className="py-2.5 px-4 text-xs text-slate-400 truncate" title={ws.name}>
-                  {ws.name}
-                </td>
-                <td className="py-2.5 px-4 text-xs text-slate-700 font-bold">
+
+                <td className="py-2.5 px-3 text-xs text-slate-700 font-bold">
                   {fmtSeconds(run.avgSeconds)}
                 </td>
-                <td className="py-2.5 px-4 text-xs text-slate-700 font-bold">
+                <td className="py-2.5 px-3 text-xs text-slate-700 font-bold">
                   {fmtSeconds(run.lastSeconds)}
                 </td>
-                <td className="py-2.5 px-4 text-xs font-bold text-slate-500">
+                <td className="py-2.5 px-3 text-xs font-bold text-slate-500">
                   {fmtDeviation(run.apiDeviationPct)}
                 </td>
-                <td className="py-2.5 px-4">
+                <td className="py-2.5 px-3">
                   {run.health ? (
                     <ApiHealthBadge health={run.health} />
                   ) : (
                     <StatusBadge status={run.status} />
                   )}
                 </td>
-                <td className="py-2.5 px-4 text-xs text-slate-400 italic font-medium">Activity</td>
+                <td className="py-2.5 px-3 text-xs text-slate-400 italic font-medium"></td>
               </tr>,
             );
           });
@@ -1971,7 +2538,7 @@ export default function WorkloadOptimization({
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <span className="text-lg font-bold text-slate-900 tracking-tight">
-            Cloud Optimization
+            Azure Workload Intelligence
           </span>
         </div>
 
@@ -1993,23 +2560,16 @@ export default function WorkloadOptimization({
       </header>
 
       {/* ── Main content ───────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-3">
-        {/* Title */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-2 space-y-2">
+        {loading && (
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl font-extrabold tracking-tight text-slate-950">Optimization</h1>
-            {loading && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading workloads
-              </span>
-            )}
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading workloads
+            </span>
           </div>
-          <p className="text-xs text-slate-500">
-            5-level drill-down · AI cost recommendations per activity
-          </p>
-        </div>
+        )}
 
-        {/* Summary tiles — single scrollable row */}
+        {/* Summary tiles */}
         <div className="flex gap-3 overflow-x-auto pb-1">
           {tiles.map((t) => {
             const Icon = t.icon;
@@ -2021,6 +2581,7 @@ export default function WorkloadOptimization({
                 onClick={() => t.filterable && setTileFilter(active ? null : t.key)}
                 aria-pressed={t.filterable ? active : undefined}
                 disabled={!t.filterable}
+                title={t.description}
                 className={`flex-1 min-w-[210px] shrink-0 text-left bg-white border rounded-2xl p-4 shadow-sm transition-all ${
                   t.filterable ? "cursor-pointer" : "cursor-default"
                 } ${active ? `${a.activeBorder} ring-2 ${a.ring}` : "border-slate-200 hover:border-slate-300"} ${
@@ -2065,7 +2626,7 @@ export default function WorkloadOptimization({
             </div>
 
             {/* Expand / Collapse — icon only */}
-            <div className="flex items-center gap-1 shrink-0">
+            {/* <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={expandAll}
                 title="Expand all"
@@ -2080,7 +2641,7 @@ export default function WorkloadOptimization({
               >
                 <ChevronsDownUp className="w-4 h-4" />
               </button>
-            </div>
+            </div> */}
 
             {/* Subscription filter */}
             <div className="relative min-w-[150px] shrink-0">
@@ -2120,26 +2681,38 @@ export default function WorkloadOptimization({
               <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
-            {/* Health state filter — now uses the raw API vocabulary */}
-            <div className="relative min-w-[150px] shrink-0">
-              <ShieldAlert className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            {/* Top scope filter */}
+            <div className="relative min-w-[130px] shrink-0">
+              <Layers className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <select
-                value={filterHealth}
-                onChange={(e) => setFilterHealth(e.target.value)}
+                value={topScope}
+                onChange={(e) => setTopScope(e.target.value as "top5" | "all")}
                 className="appearance-none w-full pl-8 pr-7 py-1.5 text-sm border border-slate-200 rounded-lg bg-slate-50/60 text-slate-800 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100/50 transition-all font-medium cursor-pointer"
-                aria-label="Filter by health state"
+                aria-label="Filter by scope"
               >
-                <option value="all">All health states</option>
-                <option value="Healthy">Healthy</option>
-                <option value="Warning">Warning</option>
-                <option value="Critical">Critical</option>
-                <option value="Severe">Severe</option>
+                <option value="top5">Top 5 Deviations</option>
+                <option value="all">All Deviations </option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Deviation type (runtime vs cost) — now inline with the rest */}
+            <div className="relative min-w-[170px] shrink-0">
+              <Gauge className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <select
+                value={deviationMode}
+                onChange={(e) => setDeviationMode(e.target.value as DeviationMode)}
+                className="appearance-none w-full pl-8 pr-7 py-1.5 text-sm border border-slate-200 rounded-lg bg-slate-50/60 text-slate-800 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100/50 transition-all font-medium cursor-pointer"
+                aria-label="Deviation type"
+              >
+                <option value="runtime">Runtime Deviation</option>
+                <option value="cost">Cost Deviation</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
             {/* Deviation filter */}
-            <div className="relative min-w-[150px] shrink-0">
+            {/* <div className="relative min-w-[150px] shrink-0">
               <TrendingUp className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <select
                 value={filterDev}
@@ -2153,41 +2726,42 @@ export default function WorkloadOptimization({
                 <option value="low">Ok (&lt;30%)</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            </div>
+            </div> */}
           </div>
         </div>
 
         {/* Drilldown Nested Table Container */}
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="max-w-full overflow-x-auto">
-            <table className="w-full min-w-[1220px] table-fixed border-collapse">
+          <div className="max-w-full max-h-[70vh] overflow-auto">
+            <table className="w-full table-fixed border-collapse">
               <colgroup>
-                <col style={{ width: "20%" }} />
-                <col style={{ width: "12%" }} />
-                <col style={{ width: "12%" }} />
+                <col style={{ width: "26%" }} />
                 <col style={{ width: "13%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "11%" }} />
+                <col style={{ width: "11%" }} />
                 <col style={{ width: "9%" }} />
                 <col style={{ width: "9%" }} />
-                <col style={{ width: "8%" }} />
-                <col style={{ width: "8%" }} />
-                <col style={{ width: "9%" }} />
+                <col style={{ width: "7%" }} />
               </colgroup>
-              <thead>
+              <thead className="sticky top-0 z-10 bg-slate-50">
                 <tr className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase tracking-wider font-extrabold text-slate-500">
-                  <th className="text-left py-3 px-4">Name</th>
-                  <th className="text-left py-3 px-4">Subscription</th>
-                  <th className="text-left py-3 px-4">Type</th>
-                  <th className="text-left py-3 px-4">Workspace</th>
-                  <th className="text-left py-3 px-4">Avg Baseline</th>
-                  <th className="text-left py-3 px-4">
+                  <th className="text-left py-3 px-3">Name</th>
+                  <th className="text-left py-3 px-3">Subscription</th>
+                  <th className="text-left py-3 px-3">Type</th>
+
+                  <th className="text-left py-3 px-3">
+                    {deviationMode === "cost" ? "Baseline Monthly Cost" : "Avg Baseline"}
+                  </th>
+                  <th className="text-left py-3 px-3">
                     <SortHeader
-                      label="Last Execution"
+                      label={deviationMode === "cost" ? "MTD Cost" : "Last Execution"}
                       active={sortKey === "last"}
                       dir={sortDir}
                       onClick={() => handleSort("last")}
                     />
                   </th>
-                  <th className="text-left py-3 px-4">
+                  <th className="text-left py-3 px-3">
                     <SortHeader
                       label="Deviation %"
                       active={sortKey === "deviation"}
@@ -2195,15 +2769,15 @@ export default function WorkloadOptimization({
                       onClick={() => handleSort("deviation")}
                     />
                   </th>
-                  <th className="text-left py-3 px-4">
+                  <th className="text-left py-3 px-3">
                     <SortHeader
-                      label="Health State"
+                      label={deviationMode === "cost" ? "Cost Status" : "Health State"}
                       active={sortKey === "health"}
                       dir={sortDir}
                       onClick={() => handleSort("health")}
                     />
                   </th>
-                  <th className="text-left py-3 px-4">Optimization Action</th>
+                  <th className="text-left py-3 px-3">Optimization Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -2213,7 +2787,7 @@ export default function WorkloadOptimization({
                   <tr>
                     <td
                       colSpan={9}
-                      className="text-center py-12 px-4 text-slate-400 text-xs font-semibold"
+                      className="text-center py-12 px-3 text-slate-400 text-xs font-semibold"
                     >
                       No workloads matching the current filters were found.
                     </td>
