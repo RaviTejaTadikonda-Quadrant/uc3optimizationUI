@@ -714,7 +714,7 @@ function AgentAnalysisPanel({
         pollData.status !== "failed" &&
         attempts < maxAttempts
       ) {
-        await sleep(1000);
+        await sleep(2000);
         pollResponse = await fetch(`${apiBaseUrl}${pollUrl}`);
         if (pollResponse.ok) {
           pollData = await pollResponse.json();
@@ -782,7 +782,10 @@ function AgentAnalysisPanel({
   const rec = aiResult?.agent_recommendation_analysis;
   const faults = aiResult?.structural_faults ?? [];
   const faultsCount = aiResult?.structural_faults_count ?? faults.length;
-  const refactorPlan = aiResult?.code_refactoring_plan ?? [];
+  const refactorPlan = (aiResult?.code_refactoring_plan ?? []).filter(
+    (item) =>
+      typeof item.auto_generated_patch === "string" && item.auto_generated_patch.trim().length > 0,
+  );
   const rootCauses = aiResult?.root_causes ?? [];
   const telemetry = aiResult?.pipeline_telemetry ?? [];
   const agentsRun = aiResult?.agents ?? [];
