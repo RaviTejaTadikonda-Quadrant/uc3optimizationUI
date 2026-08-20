@@ -1012,7 +1012,8 @@ function AgentAnalysisPanel({
 
               <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-blue-700 flex items-center gap-1.5 mb-1.5">
-                  <Zap className="w-3.5 h-3.5" /> Recommendations
+                  <Zap className="w-3.5 h-3.5" />
+                  Code Recommendations
                 </span>
                 {rec && rec.recommendations.length > 0 ? (
                   <ul className="text-xs text-blue-950 font-medium leading-relaxed space-y-1 list-disc list-inside">
@@ -1036,7 +1037,7 @@ function AgentAnalysisPanel({
 
               <div className="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 flex items-center gap-1.5 mb-1.5">
-                  <BadgeCheck className="w-3.5 h-3.5" /> Compilation Adjustment
+                  <BadgeCheck className="w-3.5 h-3.5" /> Configuration Recommendations
                 </span>
                 {rec?.compilation_adjustment ? (
                   typeof rec.compilation_adjustment === "string" ? (

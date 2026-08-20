@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Cloud, Loader2, Lock, Mail, ShieldCheck, GitBranch, Wallet, Bot } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
@@ -35,6 +35,10 @@ export default function LandingPage() {
     try {
       await signInWithAzure();
       navigate("/dashboard", { replace: true });
+    } catch (signInError) {
+      setError(
+        signInError instanceof Error ? signInError.message : "Microsoft sign-in failed. Please try again.",
+      );
     } finally {
       setBusySso(false);
     }
@@ -44,7 +48,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-slate-950 font-sans">
-      {/* ── Brand / marketing panel ─────────────────────────────── */}
+      {/* â”€â”€ Brand / marketing panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-700 to-slate-900 text-white">
         <div className="absolute inset-0 opacity-20 [background:radial-gradient(circle_at_20%_20%,white,transparent_40%),radial-gradient(circle_at_80%_60%,white,transparent_35%)]" />
         <div className="relative flex items-center gap-3">
@@ -56,12 +60,12 @@ export default function LandingPage() {
 
         <div className="relative space-y-6 max-w-md">
           <h1 className="text-4xl font-black leading-tight tracking-tight">
-            Root-cause slow pipelines and rising cloud spend — automatically.
+            Root-cause slow pipelines and rising cloud spend â€” automatically.
           </h1>
           <p className="text-white/80 text-base leading-relaxed">
             Drill down from subscription to a single pipeline run. Specialized agents investigate
             runtime regressions and cost anomalies separately, then hand you a working code patch or
-            a prioritized fix plan — not just another dashboard.
+            a prioritized fix plan â€” not just another dashboard.
           </p>
           <ul className="space-y-3 text-sm">
             {[
@@ -75,7 +79,7 @@ export default function LandingPage() {
               },
               {
                 icon: Bot,
-                t: "10+ specialist agents — code, config, dependency, impact — feed one verdict",
+                t: "10+ specialist agents â€” code, config, dependency, impact â€” feed one verdict",
               },
               { icon: ShieldCheck, t: "Enterprise SSO with Microsoft Azure AD" },
             ].map((f) => (
@@ -90,11 +94,11 @@ export default function LandingPage() {
         </div>
 
         <div className="relative text-xs text-white/50">
-          © {new Date().getFullYear()} Azure Workload Intelligence · Enterprise Platform
+          Â© {new Date().getFullYear()} Azure Workload Intelligence Â· Enterprise Platform
         </div>
       </div>
 
-      {/* ── Sign-in panel ───────────────────────────────────────── */}
+      {/* â”€â”€ Sign-in panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex items-center justify-center p-6 sm:p-10 bg-slate-50">
         <div className="w-full max-w-md">
           {/* Mobile brand */}
@@ -172,7 +176,7 @@ export default function LandingPage() {
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                     className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                   />
                 </div>
@@ -195,7 +199,7 @@ export default function LandingPage() {
             </form>
 
             <p className="mt-6 text-center text-xs text-slate-400">
-              Demo environment · any email &amp; password works
+              Demo environment Â· any email &amp; password works
             </p>
           </div>
         </div>
@@ -203,3 +207,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

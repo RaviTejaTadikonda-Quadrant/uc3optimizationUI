@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+﻿import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import LandingPage from "./pages/LandingPage";
@@ -48,4 +48,6 @@ export default function AppRouter() {
     </AuthProvider>
   );
 }
+
+
 
